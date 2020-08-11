@@ -35,18 +35,18 @@ contract("SimpleUpgrader", (accounts) => {
 
   before(async () => {
     deployer = manager.newDeployer();
-    walletImplementation = await deployer.deploy(BaseWallet);
+    walletImplementation = await BaseWallet.new();
   });
 
   beforeEach(async () => {
-    registry = await deployer.deploy(Registry);
-    guardianStorage = await deployer.deploy(GuardianStorage);
+    registry = await Registry.new();
+    guardianStorage = await GuardianStorage.new();
 
-    const proxy = await deployer.deploy(Proxy, {}, walletImplementation.contractAddress);
-    wallet = deployer.wrapDeployedContract(BaseWallet, proxy.contractAddress);
-    relayerModule = await deployer.deploy(RelayerModule, {},
-      registry.contractAddress,
-      guardianStorage.contractAddress,
+    const proxy = await Proxy.new(walletImplementation.address);
+    wallet = await BaseWallet.at(proxy.address);
+    relayerModule = await RelayerModule.new(
+      registry.address,
+      guardianStorage.address,
       ethers.constants.AddressZero,
       ethers.constants.AddressZero);
     manager.setRelayerModule(relayerModule);
@@ -55,76 +55,76 @@ contract("SimpleUpgrader", (accounts) => {
   describe("Registering modules", () => {
     it("should register modules in the registry", async () => {
       const name = "test_1.1";
-      const initialModule = await deployer.deploy(Module, {}, registry.contractAddress, guardianStorage.contractAddress, false, 0);
-      await registry.registerModule(initialModule.contractAddress, formatBytes32String(name));
+      const initialModule = await Module.new(registry.address, guardianStorage.address, false, 0);
+      await registry.registerModule(initialModule.address, formatBytes32String(name));
       // Here we adjust how we call isRegisteredModule which has 2 overlaods, one accepting a single address
       // and a second accepting an array of addresses. Behaviour as to which overload is selected to run
       // differs between CI and Coverage environments, adjusted for this here
-      const isRegistered = await registry["isRegisteredModule(address)"](initialModule.contractAddress);
+      const isRegistered = await registry["isRegisteredModule(address)"](initialModule.address);
 
       assert.equal(isRegistered, true, "module1 should be registered");
-      const info = await registry.moduleInfo(initialModule.contractAddress);
+      const info = await registry.moduleInfo(initialModule.address);
       assert.equal(parseBytes32String(info), name, "module1 should be registered with the correct name");
     });
 
     it("should add registered modules to a wallet", async () => {
       // create modules
-      const initialModule = await deployer.deploy(Module, {}, registry.contractAddress, guardianStorage.contractAddress, false, 0);
-      const moduleToAdd = await deployer.deploy(Module, {}, registry.contractAddress, guardianStorage.contractAddress, false, 0);
+      const initialModule = await Module.new(registry.address, guardianStorage.address, false, 0);
+      const moduleToAdd = await Module.new(registry.address, guardianStorage.address, false, 0);
       // register module
-      await registry.registerModule(initialModule.contractAddress, formatBytes32String("initial"));
-      await registry.registerModule(moduleToAdd.contractAddress, formatBytes32String("added"));
+      await registry.registerModule(initialModule.address, formatBytes32String("initial"));
+      await registry.registerModule(moduleToAdd.address, formatBytes32String("added"));
 
-      await wallet.init(owner, [initialModule.contractAddress]);
-      let isAuthorised = await wallet.authorised(initialModule.contractAddress);
+      await wallet.init(owner, [initialModule.address]);
+      let isAuthorised = await wallet.authorised(initialModule.address);
       assert.equal(isAuthorised, true, "initial module should be authorised");
       // add module to wallet
-      await initialModule.from(owner).addModule(wallet.contractAddress, moduleToAdd.contractAddress);
+      await initialModule.from(owner).addModule(wallet.address, moduleToAdd.address);
 
-      isAuthorised = await wallet.authorised(moduleToAdd.contractAddress);
+      isAuthorised = await wallet.authorised(moduleToAdd.address);
       assert.equal(isAuthorised, true, "added module should be authorised");
     });
 
     it("should block addition of unregistered modules to a wallet", async () => {
       // create modules
-      const initialModule = await deployer.deploy(Module, {}, registry.contractAddress, guardianStorage.contractAddress, false, 0);
-      const moduleToAdd = await deployer.deploy(Module, {}, registry.contractAddress, guardianStorage.contractAddress, false, 0);
+      const initialModule = await Module.new(registry.address, guardianStorage.address, false, 0);
+      const moduleToAdd = await Module.new(registry.address, guardianStorage.address, false, 0);
       // register initial module only
-      await registry.registerModule(initialModule.contractAddress, formatBytes32String("initial"));
+      await registry.registerModule(initialModule.address, formatBytes32String("initial"));
 
-      await wallet.init(owner, [initialModule.contractAddress]);
-      let isAuthorised = await wallet.authorised(initialModule.contractAddress);
+      await wallet.init(owner, [initialModule.address]);
+      let isAuthorised = await wallet.authorised(initialModule.address);
       assert.equal(isAuthorised, true, "initial module should be authorised");
       // try (and fail) to add moduleToAdd to wallet
-      await assert.revert(initialModule.from(owner).addModule(wallet.contractAddress, moduleToAdd.contractAddress));
-      isAuthorised = await wallet.authorised(moduleToAdd.contractAddress);
+      await assert.revert(initialModule.from(owner).addModule(wallet.address, moduleToAdd.address));
+      isAuthorised = await wallet.authorised(moduleToAdd.address);
       assert.equal(isAuthorised, false, "unregistered module should not be authorised");
     });
 
     it("should not be able to upgrade to unregistered module", async () => {
       // create module V1
-      const moduleV1 = await deployer.deploy(Module, {}, registry.contractAddress, guardianStorage.contractAddress, false, 0);
+      const moduleV1 = await Module.new(registry.address, guardianStorage.address, false, 0);
       // register module V1
-      await registry.registerModule(moduleV1.contractAddress, formatBytes32String("V1"));
+      await registry.registerModule(moduleV1.address, formatBytes32String("V1"));
 
-      await wallet.init(owner, [moduleV1.contractAddress]);
+      await wallet.init(owner, [moduleV1.address]);
       // create module V2
-      const moduleV2 = await deployer.deploy(Module, {}, registry.contractAddress, guardianStorage.contractAddress, false, 0);
+      const moduleV2 = await Module.new(registry.address, guardianStorage.address, false, 0);
       // create upgrader
-      const upgrader = await deployer.deploy(SimpleUpgrader, {}, registry.contractAddress, [moduleV1.contractAddress], [moduleV2.contractAddress]);
-      await registry.registerModule(upgrader.contractAddress, formatBytes32String("V1toV2"));
+      const upgrader = await SimpleUpgrader.new(registry.address, [moduleV1.address], [moduleV2.address]);
+      await registry.registerModule(upgrader.address, formatBytes32String("V1toV2"));
 
       // check we can't upgrade from V1 to V2
-      await assert.revertWith(moduleV1.from(owner).addModule(wallet.contractAddress, upgrader.contractAddress), "SU: Not all modules are registered");
+      await assert.revertWith(moduleV1.from(owner).addModule(wallet.address, upgrader.address), "SU: Not all modules are registered");
       // register module V2
-      await registry.registerModule(moduleV2.contractAddress, formatBytes32String("V2"));
+      await registry.registerModule(moduleV2.address, formatBytes32String("V2"));
       // now we can upgrade
-      await moduleV1.from(owner).addModule(wallet.contractAddress, upgrader.contractAddress);
+      await moduleV1.from(owner).addModule(wallet.address, upgrader.address);
 
       // test if the upgrade worked
-      const isV1Authorised = await wallet.authorised(moduleV1.contractAddress);
-      const isV2Authorised = await wallet.authorised(moduleV2.contractAddress);
-      const isUpgraderAuthorised = await wallet.authorised(upgrader.contractAddress);
+      const isV1Authorised = await wallet.authorised(moduleV1.address);
+      const isV2Authorised = await wallet.authorised(moduleV2.address);
+      const isUpgraderAuthorised = await wallet.authorised(upgrader.address);
       const numModules = await wallet.modules();
       assert.isFalse(isV1Authorised, "moduleV1 should be unauthorised");
       assert.isTrue(isV2Authorised, "moduleV2 should be authorised");
@@ -138,32 +138,30 @@ contract("SimpleUpgrader", (accounts) => {
       // create module V1
       let moduleV1;
       if (useOnlyOwnerModule) {
-        moduleV1 = await deployer.deploy(OnlyOwnerModule, {}, registry.contractAddress, guardianStorage.contractAddress);
+        moduleV1 = await OnlyOwnerModule.new(registry.address, guardianStorage.address);
       } else {
-        moduleV1 = await deployer.deploy(Module, {}, registry.contractAddress, guardianStorage.contractAddress, false, 0);
+        moduleV1 = await Module.new(registry.address, guardianStorage.address, false, 0);
       }
       // register module V1
-      await registry.registerModule(moduleV1.contractAddress, formatBytes32String("V1"));
+      await registry.registerModule(moduleV1.address, formatBytes32String("V1"));
       // create wallet with module V1 and relayer module
-      const proxy = await deployer.deploy(Proxy, {}, walletImplementation.contractAddress);
-      wallet = deployer.wrapDeployedContract(BaseWallet, proxy.contractAddress);
-      await wallet.init(owner, [moduleV1.contractAddress, relayerModule.contractAddress]);
+      const proxy = await Proxy.new(walletImplementation.address);
+      wallet = await BaseWallet.at(proxy.address);
+      await wallet.init(owner, [moduleV1.address, relayerModule.address]);
       // create module V2
-      const moduleV2 = await deployer.deploy(Module, {}, registry.contractAddress, guardianStorage.contractAddress, false, 0);
+      const moduleV2 = await Module.new(registry.address, guardianStorage.address, false, 0);
       // register module V2
-      await registry.registerModule(moduleV2.contractAddress, formatBytes32String("V2"));
+      await registry.registerModule(moduleV2.address, formatBytes32String("V2"));
       // create upgraders
-      const toAdd = modulesToAdd(moduleV2.contractAddress);
-      const upgrader1 = await deployer.deploy(SimpleUpgrader, {}, registry.contractAddress, [moduleV1.contractAddress], toAdd);
-      const upgrader2 = await deployer.deploy(
-        SimpleUpgrader,
-        {},
-        registry.contractAddress,
-        [moduleV1.contractAddress, relayerModule.contractAddress],
+      const toAdd = modulesToAdd(moduleV2.address);
+      const upgrader1 = await SimpleUpgrader.new(registry.address, [moduleV1.address], toAdd);
+      const upgrader2 = await SimpleUpgrader.new(
+        registry.address,
+        [moduleV1.address, relayerModule.address],
         toAdd,
       );
-      await registry.registerModule(upgrader1.contractAddress, formatBytes32String("V1toV2_1"));
-      await registry.registerModule(upgrader2.contractAddress, formatBytes32String("V1toV2_2"));
+      await registry.registerModule(upgrader1.address, formatBytes32String("V1toV2_1"));
+      await registry.registerModule(upgrader2.address, formatBytes32String("V1toV2_2"));
       // check that module V1 can be used to add the upgrader module
       if (useOnlyOwnerModule) {
         assert.equal(await moduleV1.isOnlyOwnerModule(), IS_ONLY_OWNER_MODULE);
@@ -171,8 +169,8 @@ contract("SimpleUpgrader", (accounts) => {
 
       // upgrade from V1 to V2
       let txReceipt;
-      const params1 = [wallet.contractAddress, upgrader1.contractAddress];
-      const params2 = [wallet.contractAddress, upgrader2.contractAddress];
+      const params1 = [wallet.address, upgrader1.address];
+      const params2 = [wallet.address, upgrader2.address];
 
       // if no module is added and all modules are removed, the upgrade should fail
       if (toAdd.length === 0) {
@@ -197,8 +195,8 @@ contract("SimpleUpgrader", (accounts) => {
 
       // test event ordering
       const logs = utils.parseLogs(txReceipt, wallet, "AuthorisedModule");
-      const upgraderAuthorisedLogIndex = logs.findIndex((e) => e.module === upgrader1.contractAddress && e.value === true);
-      const upgraderUnauthorisedLogIndex = logs.findIndex((e) => e.module === upgrader1.contractAddress && e.value === false);
+      const upgraderAuthorisedLogIndex = logs.findIndex((e) => e.module === upgrader1.address && e.value === true);
+      const upgraderUnauthorisedLogIndex = logs.findIndex((e) => e.module === upgrader1.address && e.value === false);
       if (!relayed || useOnlyOwnerModule) {
         assert.isBelow(upgraderAuthorisedLogIndex, upgraderUnauthorisedLogIndex,
           "AuthorisedModule(upgrader, false) should come after AuthorisedModule(upgrader, true)");
@@ -208,9 +206,9 @@ contract("SimpleUpgrader", (accounts) => {
       }
 
       // test if the upgrade worked
-      const isV1Authorised = await wallet.authorised(moduleV1.contractAddress);
-      const isV2Authorised = await wallet.authorised(moduleV2.contractAddress);
-      const isUpgraderAuthorised = await wallet.authorised(upgrader1.contractAddress);
+      const isV1Authorised = await wallet.authorised(moduleV1.address);
+      const isV2Authorised = await wallet.authorised(moduleV2.address);
+      const isUpgraderAuthorised = await wallet.authorised(upgrader1.address);
       const numModules = await wallet.modules();
       assert.equal(isV1Authorised, relayed && !useOnlyOwnerModule, "moduleV1 should only be unauthorised if the upgrade went through");
       assert.equal(isV2Authorised, !relayed || useOnlyOwnerModule, "moduleV2 should only be authorised if the upgrade went through");
@@ -256,71 +254,69 @@ contract("SimpleUpgrader", (accounts) => {
 
     beforeEach(async () => {
       // Setup the modules for wallet
-      guardianManager = await deployer.deploy(GuardianManager, {}, registry.contractAddress, guardianStorage.contractAddress, 24, 12);
-      lockManager = await deployer.deploy(LockManager, {}, registry.contractAddress, guardianStorage.contractAddress, 24 * 5);
-      recoveryManager = await deployer.deploy(RecoveryManager, {}, registry.contractAddress, guardianStorage.contractAddress, 36, 24 * 5);
+      guardianManager = await GuardianManager.new(registry.address, guardianStorage.address, 24, 12);
+      lockManager = await LockManager.new(registry.address, guardianStorage.address, 24 * 5);
+      recoveryManager = await RecoveryManager.new(registry.address, guardianStorage.address, 36, 24 * 5);
 
       // Setup the wallet with the initial set of modules
       await wallet.init(owner,
         [
-          relayerModule.contractAddress,
-          guardianManager.contractAddress,
-          lockManager.contractAddress,
-          recoveryManager.contractAddress,
+          relayerModule.address,
+          guardianManager.address,
+          lockManager.address,
+          recoveryManager.address,
         ]);
-      await guardianManager.from(owner).addGuardian(wallet.contractAddress, guardian.address);
+      await guardianManager.from(owner).addGuardian(wallet.address, guardian.address);
 
       // Setup module v2 for the upgrade
-      moduleV2 = await deployer.deploy(Module, {}, registry.contractAddress, guardianStorage.contractAddress, false, 0);
-      await registry.registerModule(moduleV2.contractAddress, formatBytes32String("V2"));
+      moduleV2 = await Module.new(registry.address, guardianStorage.address, false, 0);
+      await registry.registerModule(moduleV2.address, formatBytes32String("V2"));
     });
 
     it("should not be able to upgrade if wallet is locked by guardian", async () => {
-      const upgrader = await deployer.deploy(SimpleUpgrader, {}, registry.contractAddress, [lockManager.contractAddress], [moduleV2.contractAddress]);
-      await registry.registerModule(upgrader.contractAddress, formatBytes32String("V1toV2"));
+      const upgrader = await SimpleUpgrader.new(registry.address, [lockManager.address], [moduleV2.address]);
+      await registry.registerModule(upgrader.address, formatBytes32String("V1toV2"));
 
       // Guardian locks the wallet
-      await lockManager.from(guardian).lock(wallet.contractAddress);
+      await lockManager.from(guardian).lock(wallet.address);
 
       // Try to upgrade while wallet is locked
-      await assert.revertWith(lockManager.from(owner).addModule(wallet.contractAddress, upgrader.contractAddress), "BM: wallet locked");
+      await assert.revertWith(lockManager.from(owner).addModule(wallet.address, upgrader.address), "BM: wallet locked");
 
       // Check wallet is still locked
-      const locked = await lockManager.isLocked(wallet.contractAddress);
+      const locked = await lockManager.isLocked(wallet.address);
       assert.isTrue(locked);
       // Check upgrade failed
-      const isV1Authorised = await wallet.authorised(lockManager.contractAddress);
-      const isV2Authorised = await wallet.authorised(moduleV2.contractAddress);
+      const isV1Authorised = await wallet.authorised(lockManager.address);
+      const isV2Authorised = await wallet.authorised(moduleV2.address);
       assert.isTrue(isV1Authorised);
       assert.isFalse(isV2Authorised);
     });
 
     it("should not be able to upgrade if wallet is under recovery", async () => {
-      const upgrader = await deployer.deploy(
-        SimpleUpgrader,
-        {},
-        registry.contractAddress,
-        [recoveryManager.contractAddress],
-        [moduleV2.contractAddress],
+      const upgrader = await SimpleUpgrader.new(
+        registry.address,
+        [recoveryManager.address],
+        [moduleV2.address],
       );
-      await registry.registerModule(upgrader.contractAddress, formatBytes32String("V1toV2"));
+      await registry.registerModule(upgrader.address, formatBytes32String("V1toV2"));
 
       // Put the wallet under recovery
-      await manager.relay(recoveryManager, "executeRecovery", [wallet.contractAddress, newowner.address], wallet, [guardian]);
+      await manager.relay(recoveryManager, "executeRecovery", [wallet.address, newowner.address], wallet, [guardian]);
       // check that the wallet is locked
-      let locked = await lockManager.isLocked(wallet.contractAddress);
+      let locked = await lockManager.isLocked(wallet.address);
       assert.isTrue(locked, "wallet should be locked");
 
       // Try to upgrade while wallet is under recovery
-      await assert.revertWith(recoveryManager.from(owner).addModule(wallet.contractAddress, upgrader.contractAddress), "BM: wallet locked");
+      await assert.revertWith(recoveryManager.from(owner).addModule(wallet.address, upgrader.address), "BM: wallet locked");
 
       // Check wallet is still locked
-      locked = await lockManager.isLocked(wallet.contractAddress);
+      locked = await lockManager.isLocked(wallet.address);
       assert.isTrue(locked, "wallet should still be locked");
 
       // Check upgrade failed
-      const isV1Authorised = await wallet.authorised(recoveryManager.contractAddress);
-      const isV2Authorised = await wallet.authorised(moduleV2.contractAddress);
+      const isV1Authorised = await wallet.authorised(recoveryManager.address);
+      const isV2Authorised = await wallet.authorised(moduleV2.address);
       assert.isTrue(isV1Authorised);
       assert.isFalse(isV2Authorised);
     });

@@ -29,8 +29,8 @@ async function main() {
   const { config } = configurator;
   console.log("Config:", config);
 
-  const walletFactoryWrapper = await deployer.wrapDeployedContract(WalletFactory, config.contracts.WalletFactory);
-  const multisigWrapper = await deployer.wrapDeployedContract(MultiSigWallet, config.contracts.MultiSigWallet);
+  const walletFactoryWrapper = await WalletFactory.at(config.contracts.WalletFactory);
+  const multisigWrapper = await MultiSigWallet.at(config.contracts.MultiSigWallet);
   const multisigExecutor = new MultisigExecutor(multisigWrapper, manager, config.multisig.autosign);
 
   // Make manager a temporary manager of WalletFactory to facilitate wallet initialization

@@ -82,48 +82,54 @@ describe("Test MakerV2 Vaults", () => {
     owner = deployer.signer;
     config = configurator.config;
 
-    migration = await deployer.wrapDeployedContract(ScdMcdMigration, config.defi.maker.migration);
-    daiJoin = await deployer.wrapDeployedContract(Join, await migration.daiJoin());
-    daiToken = await deployer.wrapDeployedContract(DSToken, await daiJoin.dai());
-    saiJoin = await deployer.wrapDeployedContract(Join, await migration.saiJoin());
-    saiToken = await deployer.wrapDeployedContract(DSToken, await saiJoin.gem());
-    wethJoin = await deployer.wrapDeployedContract(Join, await migration.wethJoin());
-    wethToken = await deployer.wrapDeployedContract(DSToken, await wethJoin.gem());
-    batJoin = await deployer.wrapDeployedContract(Join, config.defi.maker.batJoin);
-    batToken = await deployer.wrapDeployedContract(DSToken, await batJoin.gem());
+    migration = await ScdMcdMigration.at(config.defi.maker.migration);
+    const daiJoinAddress = await migration.daiJoin();
+    daiJoin = await Join.at(daiJoinAddress);
+    const daiTokenAddress = await daiJoin.dai();
+    daiToken = await DSToken.daiTokenAddress;
+    const saiJoinAddress = await migration.saiJoin();
+    saiJoin = await Join.at(saiJoinAddress);
+    const saiTokenAddress = await saiJoin.gem();
+    saiToken = await DSToken.at(saiTokenAddress);
+    const wethJoinAddress = await migration.wethJoin();
+    wethJoin = await Join.at(wethJoinAddress);
+    const wethTokenAddress = await wethJoin.gem();
+    wethToken = await DSToken.at(wethTokenAddress);
+    batJoin = await Join.at(config.defi.maker.batJoin);
+    const batTokenAddress = await batJoin.gem();
+    batToken = await DSToken.at(batTokenAddress);
 
-    const uniswapFactory = await deployer.wrapDeployedContract(UniswapFactory, config.defi.uniswap.factory);
-    daiExchange = await deployer.wrapDeployedContract(UniswapExchange, await uniswapFactory.getExchange(daiToken.contractAddress));
+    const uniswapFactory = await UniswapFactory.at(config.defi.uniswap.factory);
+    const daiExchangeAddress = await uniswapFactory.getExchange(daiToken.address);
+    daiExchange = await UniswapExchange.at(daiExchangeAddress);
 
     const vat = await migration.vat();
-    makerRegistry = await deployer.deploy(MakerRegistry, {}, vat);
-    await (await makerRegistry.addCollateral(wethJoin.contractAddress)).wait();
+    makerRegistry = await MakerRegistry.new(vat);
+    await (await makerRegistry.addCollateral(wethJoin.address)).wait();
 
-    makerV2 = await deployer.deploy(
-      MakerV2Manager,
-      {},
+    makerV2 = await MakerV2Manager.new(
       config.contracts.ModuleRegistry,
       config.modules.GuardianStorage,
       config.defi.maker.migration,
       config.defi.maker.pot,
       config.defi.maker.jug,
-      makerRegistry.contractAddress,
+      makerRegistry.address,
       config.defi.uniswap.factory,
       { gasLimit: 8000000 },
     );
-    transferManager = await deployer.wrapDeployedContract(TransferManager, config.modules.TransferManager);
-    makerV1 = await deployer.wrapDeployedContract(MakerV1Manager, config.modules.MakerManager);
+    transferManager = await TransferManager.at(config.modules.TransferManager);
+    makerV1 = await MakerV1Manager.new(config.modules.MakerManager);
   });
 
   beforeEach(async () => {
     lastLoanId = null;
-    wallet = await deployer.deploy(Wallet);
+    wallet = await Wallet.new();
     await wallet.verboseWaitForTransaction(await wallet.init(owner, [
       config.modules.MakerManager, // MakerV1
-      makerV2.contractAddress,
-      transferManager.contractAddress,
+      makerV2.address,
+      transferManager.address,
     ]));
-    walletAddress = wallet.contractAddress;
+    walletAddress = wallet.address;
     await (await walletAddress.send(parseEther("0.3"))).wait();
   });
 
@@ -137,7 +143,7 @@ describe("Test MakerV2 Vaults", () => {
     await (await transferManager.transferToken(walletAddress, ETH_TOKEN, owner, ethBalance, HashZero, { gasLimit: 2000000 })).wait();
     await (await transferManager.transferToken(
       walletAddress,
-      daiToken.contractAddress,
+      daiToken.address,
       owner,
       daiBalance,
       HashZero,
@@ -145,7 +151,7 @@ describe("Test MakerV2 Vaults", () => {
     )).wait();
     const afterDAI = await daiToken.balanceOf(owner);
     if (afterDAI.gt(0)) {
-      await (await daiToken.approve(daiExchange.contractAddress, afterDAI)).wait();
+      await (await daiToken.approve(daiExchange.address, afterDAI)).wait();
       const currentBlock = await testManager.getCurrentBlock();
       const timestamp = await testManager.getTimestamp(currentBlock);
       await (await daiExchange.tokenToEthSwapInput(afterDAI, 1, timestamp + 24 * 3600, { gasLimit: 3000000 })).wait();
@@ -158,9 +164,10 @@ describe("Test MakerV2 Vaults", () => {
 
   describe("Loan", () => {
     async function getTestAmounts(tokenAddress) {
-      const tokenAddress_ = (tokenAddress === ETH_TOKEN) ? wethToken.contractAddress : tokenAddress;
+      const tokenAddress_ = (tokenAddress === ETH_TOKEN) ? wethToken.address : tokenAddress;
       const { ilk } = await makerRegistry.collaterals(tokenAddress_);
-      const vat = await deployer.wrapDeployedContract(Vat, await daiJoin.vat());
+      const vatAddress = await daiJoin.vat();
+      const vat = await Vat.at(vatAddress);
       const { spot, dust } = await vat.ilks(ilk);
       const daiAmount = dust.div(RAY);
       const collateralAmount = dust.div(spot).mul(12).div(10);
@@ -170,7 +177,7 @@ describe("Test MakerV2 Vaults", () => {
     async function testOpenLoan({
       collateralAmount, daiAmount, relayed, collateral = { contractAddress: ETH_TOKEN },
     }) {
-      const beforeCollateral = (collateral.contractAddress === ETH_TOKEN)
+      const beforeCollateral = (collateral.address === ETH_TOKEN)
         ? await deployer.provider.getBalance(walletAddress)
         : await collateral.balanceOf(walletAddress);
 
@@ -178,7 +185,7 @@ describe("Test MakerV2 Vaults", () => {
       const beforeDAISupply = await daiToken.totalSupply();
 
       const method = "openLoan";
-      const params = [walletAddress, collateral.contractAddress, collateralAmount, daiToken.contractAddress, daiAmount];
+      const params = [walletAddress, collateral.address, collateralAmount, daiToken.address, daiAmount];
       let txR;
       if (relayed) {
         txR = await testManager.relay(makerV2, method, params, { contractAddress: walletAddress }, [owner]);
@@ -189,7 +196,7 @@ describe("Test MakerV2 Vaults", () => {
       lastLoanId = txR.events.find((e) => e.event === "LoanOpened").args._loanId;
       assert.isDefined(lastLoanId, "Loan ID should be defined");
 
-      const afterCollateral = (collateral.contractAddress === ETH_TOKEN)
+      const afterCollateral = (collateral.address === ETH_TOKEN)
         ? await deployer.provider.getBalance(walletAddress)
         : await collateral.balanceOf(walletAddress);
       const afterDAI = await daiToken.balanceOf(walletAddress);
@@ -247,12 +254,12 @@ describe("Test MakerV2 Vaults", () => {
     async function testChangeCollateral({
       loanId, collateralAmount, add, relayed, collateral = { contractAddress: ETH_TOKEN }, makerV2Manager = makerV2,
     }) {
-      const beforeCollateral = (collateral.contractAddress === ETH_TOKEN)
+      const beforeCollateral = (collateral.address === ETH_TOKEN)
         ? await deployer.provider.getBalance(walletAddress)
         : await collateral.balanceOf(walletAddress);
 
       const method = add ? "addCollateral" : "removeCollateral";
-      const params = [wallet.contractAddress, loanId, collateral.contractAddress, collateralAmount];
+      const params = [wallet.address, loanId, collateral.address, collateralAmount];
       if (relayed) {
         const txR = await testManager.relay(makerV2Manager, method, params, { contractAddress: walletAddress }, [owner]);
         assert.isTrue(txR.events.find((e) => e.event === "TransactionExecuted").args.success, "Relayed tx should succeed");
@@ -260,7 +267,7 @@ describe("Test MakerV2 Vaults", () => {
         await makerV2Manager.verboseWaitForTransaction(await makerV2Manager[method](...params, { gasLimit: 2000000 }));
       }
 
-      const afterCollateral = (collateral.contractAddress === ETH_TOKEN)
+      const afterCollateral = (collateral.address === ETH_TOKEN)
         ? await deployer.provider.getBalance(walletAddress)
         : await collateral.balanceOf(walletAddress);
 
@@ -309,18 +316,18 @@ describe("Test MakerV2 Vaults", () => {
     async function testChangeDebt({
       loanId, daiAmount, add, relayed,
     }) {
-      const beforeDAI = await daiToken.balanceOf(wallet.contractAddress);
-      const beforeETH = await deployer.provider.getBalance(wallet.contractAddress);
+      const beforeDAI = await daiToken.balanceOf(wallet.address);
+      const beforeETH = await deployer.provider.getBalance(wallet.address);
       const method = add ? "addDebt" : "removeDebt";
-      const params = [wallet.contractAddress, loanId, daiToken.contractAddress, daiAmount];
+      const params = [wallet.address, loanId, daiToken.address, daiAmount];
       if (relayed) {
         const txR = await testManager.relay(makerV2, method, params, { contractAddress: walletAddress }, [owner]);
         assert.isTrue(txR.events.find((e) => e.event === "TransactionExecuted").args.success, "Relayed tx should succeed");
       } else {
         await makerV2.verboseWaitForTransaction(await makerV2[method](...params, { gasLimit: 2000000 }));
       }
-      const afterDAI = await daiToken.balanceOf(wallet.contractAddress);
-      const afterETH = await deployer.provider.getBalance(wallet.contractAddress);
+      const afterDAI = await daiToken.balanceOf(wallet.address);
+      const afterETH = await deployer.provider.getBalance(wallet.address);
       if (add) {
         assert.equal(
           afterDAI.sub(beforeDAI).toString(),
@@ -365,19 +372,19 @@ describe("Test MakerV2 Vaults", () => {
       if (!useDai) {
         // move the borrowed DAI from the wallet to the owner
         await (await transferManager.transferToken(
-          walletAddress, daiToken.contractAddress, owner, daiAmount, HashZero, { gasLimit: 3000000 },
+          walletAddress, daiToken.address, owner, daiAmount, HashZero, { gasLimit: 3000000 },
         )).wait();
         // give some ETH to the wallet to be used for repayment
         await (await wallet.send(collateralAmount)).wait();
       }
       await testManager.increaseTime(3); // wait 3 seconds
-      const beforeDAI = await daiToken.balanceOf(wallet.contractAddress);
-      const beforeETH = await deployer.provider.getBalance(wallet.contractAddress);
+      const beforeDAI = await daiToken.balanceOf(wallet.address);
+      const beforeETH = await deployer.provider.getBalance(wallet.address);
       await testChangeDebt({
         loanId, daiAmount: parseEther("0.2"), add: false, relayed,
       });
-      const afterDAI = await daiToken.balanceOf(wallet.contractAddress);
-      const afterETH = await deployer.provider.getBalance(wallet.contractAddress);
+      const afterDAI = await daiToken.balanceOf(wallet.address);
+      const afterETH = await deployer.provider.getBalance(wallet.address);
 
       if (useDai) assert.isTrue(afterDAI.lt(beforeDAI) && afterETH.eq(beforeETH), "should have less DAI");
       else assert.isTrue(afterDAI.eq(beforeDAI) && afterETH.lt(beforeETH), "should have less ETH");
@@ -409,14 +416,14 @@ describe("Test MakerV2 Vaults", () => {
       if (!useDai) {
         // move the borrowed DAI from the wallet to the owner
         await (await transferManager.transferToken(
-          walletAddress, daiToken.contractAddress, owner, daiAmount, HashZero, { gasLimit: 3000000 },
+          walletAddress, daiToken.address, owner, daiAmount, HashZero, { gasLimit: 3000000 },
         )).wait();
       }
       await testManager.increaseTime(3); // wait 3 seconds
-      const beforeDAI = await daiToken.balanceOf(wallet.contractAddress);
-      const beforeETH = await deployer.provider.getBalance(wallet.contractAddress);
+      const beforeDAI = await daiToken.balanceOf(wallet.address);
+      const beforeETH = await deployer.provider.getBalance(wallet.address);
       const method = "closeLoan";
-      const params = [wallet.contractAddress, loanId];
+      const params = [wallet.address, loanId];
       if (relayed) {
         const txR = await testManager.relay(makerV2, method, params, { contractAddress: walletAddress }, [owner]);
         assert.isTrue(txR.events.find((e) => e.event === "TransactionExecuted").args.success, "Relayed tx should succeed");
@@ -424,8 +431,8 @@ describe("Test MakerV2 Vaults", () => {
         await makerV2.verboseWaitForTransaction(await makerV2[method](...params, { gasLimit: 3000000 }));
       }
       lastLoanId = null;
-      const afterDAI = await daiToken.balanceOf(wallet.contractAddress);
-      const afterETH = await deployer.provider.getBalance(wallet.contractAddress);
+      const afterDAI = await daiToken.balanceOf(wallet.address);
+      const afterETH = await deployer.provider.getBalance(wallet.address);
 
       if (useDai) assert.isTrue(afterDAI.lt(beforeDAI) && afterETH.sub(collateralAmount).lt(beforeETH), "should have spent some DAI and some ETH");
       else assert.isTrue(afterDAI.eq(beforeDAI) && afterETH.sub(collateralAmount).lt(beforeETH), "should have spent some ETH");
@@ -455,7 +462,7 @@ describe("Test MakerV2 Vaults", () => {
           FaucetUser,
           {},
           config.defi.maker.batFaucet,
-          token.contractAddress,
+          token.address,
         );
       }
       await (await token.transfer(walletAddress, amount)).wait();
@@ -463,8 +470,8 @@ describe("Test MakerV2 Vaults", () => {
 
     describe("Adding new collateral token to registry", () => {
       it("should open a loan with a newly added collateral token", async () => {
-        await (await makerRegistry.addCollateral(batJoin.contractAddress)).wait();
-        const { daiAmount, collateralAmount } = await getTestAmounts(batToken.contractAddress);
+        await (await makerRegistry.addCollateral(batJoin.address)).wait();
+        const { daiAmount, collateralAmount } = await getTestAmounts(batToken.address);
         await topupWalletToken(batToken, collateralAmount);
         await testOpenLoan({
           collateralAmount, daiAmount, collateral: batToken, relayed: false,
@@ -476,8 +483,9 @@ describe("Test MakerV2 Vaults", () => {
     describe("Acquiring a wallet's vault", () => {
       async function testAcquireVault({ relayed }) {
         // Create the vault with `owner` as owner
-        const cdpManager = await deployer.wrapDeployedContract(CdpManager, await migration.cdpManager());
-        const { ilk } = await makerRegistry.collaterals(wethToken.contractAddress);
+        const cdpManagerAddress = await migration.cdpManager();
+        const cdpManager = await CdpManager.at(cdpManagerAddress);
+        const { ilk } = await makerRegistry.collaterals(wethToken.address);
         let txR = await (await cdpManager.open(ilk, owner)).wait();
         const vaultId = txR.events.find((e) => e.event === "NewCdp").args.cdp;
         // Transfer the vault to the wallet
@@ -523,19 +531,19 @@ describe("Test MakerV2 Vaults", () => {
           // the downside is that it can only be migrated once
           oldCdpId = "0x0000000000000000000000000000000000000000000000000000000000001d04";
           walletAddressToMigrate = "0xAB3f50Ff1e4a516ef494b9C226ef0a26065766df";
-          const walletToMigrate = await deployer.wrapDeployedContract(Wallet, walletAddressToMigrate);
-          if (!(await walletToMigrate.authorised(makerV2.contractAddress))) {
+          const walletToMigrate = await Wallet.at(walletAddressToMigrate);
+          if (!(await walletToMigrate.authorised(makerV2.address))) {
             // Register the MakerV2 module in the ModuleRegistry
-            const moduleRegistry = await deployer.wrapDeployedContract(ModuleRegistry, config.contracts.ModuleRegistry);
-            const multisig = await deployer.wrapDeployedContract(MultiSig, config.contracts.MultiSigWallet);
+            const moduleRegistry = await ModuleRegistry.at(config.contracts.ModuleRegistry);
+            const multisig = await MultiSig.at(config.contracts.MultiSigWallet);
             const multisigExecutor = new MultisigExecutor(multisig, owner, config.multisig.autosign);
-            await multisigExecutor.executeCall(moduleRegistry, "registerModule", [makerV2.contractAddress, formatBytes32String("MakerV2Manager")]);
+            await multisigExecutor.executeCall(moduleRegistry, "registerModule", [makerV2.address, formatBytes32String("MakerV2Manager")]);
             // Add the MakerV2 module to the existing wallet
-            await (await makerV1.addModule(walletAddressToMigrate, makerV2.contractAddress)).wait();
+            await (await makerV1.addModule(walletAddressToMigrate, makerV2.address)).wait();
           }
         } else {
           const { daiAmount, collateralAmount } = await getTestAmounts(ETH_TOKEN);
-          const params = [walletAddress, ETH_TOKEN, collateralAmount, saiToken.contractAddress, daiAmount];
+          const params = [walletAddress, ETH_TOKEN, collateralAmount, saiToken.address, daiAmount];
           const txReceipt = await (await makerV1.openLoan(...params, { gasLimit: 2000000 })).wait();
           oldCdpId = txReceipt.events.find((e) => e.event === "LoanOpened").args._loanId;
           assert.isDefined(oldCdpId, "The old CDP ID should be defined");
@@ -588,25 +596,25 @@ describe("Test MakerV2 Vaults", () => {
           config.defi.maker.migration,
           config.defi.maker.pot,
           config.defi.maker.jug,
-          makerRegistry.contractAddress,
+          makerRegistry.address,
           config.defi.uniswap.factory,
-          makerV2.contractAddress,
+          makerV2.address,
           { gasLimit: 10700000 },
         );
 
         // Register the upgraded MakerV2 module in the ModuleRegistry
-        const moduleRegistry = await deployer.wrapDeployedContract(ModuleRegistry, config.contracts.ModuleRegistry);
-        const multisig = await deployer.wrapDeployedContract(MultiSig, config.contracts.MultiSigWallet);
+        const moduleRegistry = await ModuleRegistry.at(config.contracts.ModuleRegistry);
+        const multisig = await MultiSig.at(config.contracts.MultiSigWallet);
         const multisigExecutor = new MultisigExecutor(multisig, owner, config.multisig.autosign);
         await multisigExecutor.executeCall(
           moduleRegistry,
           "registerModule",
-          [upgradedMakerV2.contractAddress, formatBytes32String("UpgradedMakerV2Manager")],
+          [upgradedMakerV2.address, formatBytes32String("UpgradedMakerV2Manager")],
         );
 
         // Adding BAT to the registry of supported collateral tokens
-        if (!(await makerRegistry.collaterals(batToken.contractAddress)).exists) {
-          await (await makerRegistry.addCollateral(batJoin.contractAddress)).wait();
+        if (!(await makerRegistry.collaterals(batToken.address)).exists) {
+          await (await makerRegistry.addCollateral(batJoin.address)).wait();
         }
       });
 
@@ -617,7 +625,7 @@ describe("Test MakerV2 Vaults", () => {
         let loanId2;
         if (withBatVault) {
           // Open a BAT vault with the old MakerV2 module
-          const batTestAmounts = await getTestAmounts(batToken.contractAddress);
+          const batTestAmounts = await getTestAmounts(batToken.address);
           await topupWalletToken(batToken, batTestAmounts.collateralAmount.add(parseEther("0.01")));
           loanId2 = await testOpenLoan({
             collateralAmount: batTestAmounts.collateralAmount,
@@ -629,7 +637,7 @@ describe("Test MakerV2 Vaults", () => {
 
         // Add the upgraded module
         const method = "addModule";
-        const params = [walletAddress, upgradedMakerV2.contractAddress];
+        const params = [walletAddress, upgradedMakerV2.address];
         if (relayed) {
           const txR = await testManager.relay(makerV2, method, params, { contractAddress: walletAddress }, [owner]);
           assert.isTrue(txR.events.find((e) => e.event === "TransactionExecuted").args.success, "Relayed tx should succeed");

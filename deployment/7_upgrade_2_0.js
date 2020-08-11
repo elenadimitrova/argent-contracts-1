@@ -80,7 +80,7 @@ const deploy = async (network) => {
   const BaseWalletWrapper = await deployer.deploy(BaseWallet);
   // Deploy the Wallet Factory
   const WalletFactoryWrapper = await deployer.deploy(WalletFactory, {},
-    ModuleRegistryWrapper.contractAddress, BaseWalletWrapper.contractAddress, ENSManagerWrapper.contractAddress, config.modules.GuardianStorage);
+    ModuleRegistryWrapper.address, BaseWalletWrapper.address, ENSManagerWrapper.address, config.modules.GuardianStorage);
   // Deploy the new LimitStorage
   const LimitStorageWrapper = await deployer.deploy(LimitStorage);
   // Deploy the new TokenPriceStorage
@@ -94,7 +94,7 @@ const deploy = async (network) => {
     {},
     config.contracts.ModuleRegistry,
     config.modules.GuardianStorage,
-    LimitStorageWrapper.contractAddress,
+    LimitStorageWrapper.address,
     config.defi.weth,
   );
   newModuleWrappers.push(ApprovedTransferWrapper);
@@ -177,8 +177,8 @@ const deploy = async (network) => {
     config.contracts.ModuleRegistry,
     config.modules.TransferStorage,
     config.modules.GuardianStorage,
-    LimitStorageWrapper.contractAddress,
-    TokenPriceStorageWrapper.contractAddress,
+    LimitStorageWrapper.address,
+    TokenPriceStorageWrapper.address,
     config.settings.securityPeriod || 0,
     config.settings.securityWindow || 0,
     config.settings.defaultLimit || "1000000000000000000",
@@ -192,15 +192,15 @@ const deploy = async (network) => {
     {},
     config.contracts.ModuleRegistry,
     config.modules.GuardianStorage,
-    LimitStorageWrapper.contractAddress,
-    TokenPriceStorageWrapper.contractAddress,
+    LimitStorageWrapper.address,
+    TokenPriceStorageWrapper.address,
   );
   newModuleWrappers.push(RelayerModuleWrapper);
 
   // //////////////////////////////////
   // Set contracts' managers
   // //////////////////////////////////
-  await multisigExecutor.executeCall(ENSManagerWrapper, "addManager", [WalletFactoryWrapper.contractAddress]);
+  await multisigExecutor.executeCall(ENSManagerWrapper, "addManager", [WalletFactoryWrapper.address]);
 
   for (const idx in config.backend.accounts) {
     const account = config.backend.accounts[idx];
@@ -227,23 +227,23 @@ const deploy = async (network) => {
   // /////////////////////////////////////////////////
 
   configurator.updateModuleAddresses({
-    LimitStorage: LimitStorageWrapper.contractAddress,
-    TokenPriceStorage: TokenPriceStorageWrapper.contractAddress,
-    ApprovedTransfer: ApprovedTransferWrapper.contractAddress,
-    CompoundManager: CompoundManagerWrapper.contractAddress,
-    GuardianManager: GuardianManagerWrapper.contractAddress,
-    LockManager: LockManagerWrapper.contractAddress,
-    NftTransfer: NftTransferWrapper.contractAddress,
-    RecoveryManager: RecoveryManagerWrapper.contractAddress,
-    TokenExchanger: TokenExchangerWrapper.contractAddress,
-    MakerV2Manager: MakerV2ManagerWrapper.contractAddress,
-    TransferManager: TransferManagerWrapper.contractAddress,
-    RelayerModule: RelayerModuleWrapper.contractAddress,
+    LimitStorage: LimitStorageWrapper.address,
+    TokenPriceStorage: TokenPriceStorageWrapper.address,
+    ApprovedTransfer: ApprovedTransferWrapper.address,
+    CompoundManager: CompoundManagerWrapper.address,
+    GuardianManager: GuardianManagerWrapper.address,
+    LockManager: LockManagerWrapper.address,
+    NftTransfer: NftTransferWrapper.address,
+    RecoveryManager: RecoveryManagerWrapper.address,
+    TokenExchanger: TokenExchangerWrapper.address,
+    MakerV2Manager: MakerV2ManagerWrapper.address,
+    TransferManager: TransferManagerWrapper.address,
+    RelayerModule: RelayerModuleWrapper.address,
   });
 
   configurator.updateInfrastructureAddresses({
-    BaseWallet: BaseWalletWrapper.contractAddress,
-    WalletFactory: WalletFactoryWrapper.contractAddress,
+    BaseWallet: BaseWalletWrapper.address,
+    WalletFactory: WalletFactoryWrapper.address,
   });
 
   const gitHash = childProcess.execSync("git rev-parse HEAD").toString("utf8").replace(/\n$/, "");
@@ -274,7 +274,7 @@ const deploy = async (network) => {
   for (let idx = 0; idx < newModuleWrappers.length; idx += 1) {
     const wrapper = newModuleWrappers[idx];
     await multisigExecutor.executeCall(ModuleRegistryWrapper, "registerModule",
-      [wrapper.contractAddress, utils.asciiToBytes32(wrapper._contract.contractName)]);
+      [wrapper.address, utils.asciiToBytes32(wrapper._contract.contractName)]);
   }
 
   // //////////////////////////////////
@@ -290,7 +290,7 @@ const deploy = async (network) => {
       const moduleNamesToRemove = MODULES_TO_DISABLE.concat(MODULES_TO_ENABLE);
       toRemove = version.modules.filter((module) => moduleNamesToRemove.includes(module.name));
       toAdd = newModuleWrappers.map((wrapper) => ({
-        address: wrapper.contractAddress,
+        address: wrapper.address,
         name: wrapper._contract.contractName,
       }));
       const toKeep = version.modules.filter((module) => !moduleNamesToRemove.includes(module.name));
@@ -317,10 +317,10 @@ const deploy = async (network) => {
       toAdd.map((module) => module.address),
     );
     await multisigExecutor.executeCall(ModuleRegistryWrapper, "registerModule",
-      [UpgraderWrapper.contractAddress, utils.asciiToBytes32(upgraderName)]);
+      [UpgraderWrapper.address, utils.asciiToBytes32(upgraderName)]);
 
     await multisigExecutor.executeCall(ModuleRegistryWrapper, "registerUpgrader",
-      [UpgraderWrapper.contractAddress, utils.asciiToBytes32(upgraderName)]);
+      [UpgraderWrapper.address, utils.asciiToBytes32(upgraderName)]);
   }
 
   // //////////////////////////////////

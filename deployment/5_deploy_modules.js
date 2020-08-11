@@ -51,7 +51,7 @@ const deploy = async (network) => {
     GuardianManager,
     {},
     config.contracts.ModuleRegistry,
-    GuardianStorageWrapper.contractAddress,
+    GuardianStorageWrapper.address,
     config.settings.securityPeriod || 0,
     config.settings.securityWindow || 0,
   );
@@ -60,7 +60,7 @@ const deploy = async (network) => {
     LockManager,
     {},
     config.contracts.ModuleRegistry,
-    GuardianStorageWrapper.contractAddress,
+    GuardianStorageWrapper.address,
     config.settings.lockPeriod || 0,
   );
   // Deploy the RecoveryManager module
@@ -68,7 +68,7 @@ const deploy = async (network) => {
     RecoveryManager,
     {},
     config.contracts.ModuleRegistry,
-    GuardianStorageWrapper.contractAddress,
+    GuardianStorageWrapper.address,
     config.settings.recoveryPeriod || 0,
     config.settings.lockPeriod || 0,
     config.settings.securityPeriod || 0,
@@ -79,15 +79,15 @@ const deploy = async (network) => {
     ApprovedTransfer,
     {},
     config.contracts.ModuleRegistry,
-    GuardianStorageWrapper.contractAddress,
+    GuardianStorageWrapper.address,
   );
   // Deploy the TransferManager module
   const TransferManagerWrapper = await deployer.deploy(
     TransferManager,
     {},
     config.contracts.ModuleRegistry,
-    TransferStorageWrapper.contractAddress,
-    GuardianStorageWrapper.contractAddress,
+    TransferStorageWrapper.address,
+    GuardianStorageWrapper.address,
     config.contracts.TokenPriceProvider,
     config.settings.securityPeriod || 0,
     config.settings.securityWindow || 0,
@@ -99,7 +99,7 @@ const deploy = async (network) => {
     TokenExchanger,
     {},
     config.contracts.ModuleRegistry,
-    GuardianStorageWrapper.contractAddress,
+    GuardianStorageWrapper.address,
     config.Kyber ? config.Kyber.contract : "0x0000000000000000000000000000000000000000",
     config.contracts.MultiSigWallet,
     config.settings.feeRatio || 0,
@@ -109,7 +109,7 @@ const deploy = async (network) => {
     NftTransfer,
     {},
     config.contracts.ModuleRegistry,
-    GuardianStorageWrapper.contractAddress,
+    GuardianStorageWrapper.address,
     config.CryptoKitties.contract,
   );
   // Deploy the CompoundManager module
@@ -117,7 +117,7 @@ const deploy = async (network) => {
     CompoundManager,
     {},
     config.contracts.ModuleRegistry,
-    GuardianStorageWrapper.contractAddress,
+    GuardianStorageWrapper.address,
     config.defi.compound.comptroller,
     config.contracts.CompoundRegistry,
   );
@@ -126,7 +126,7 @@ const deploy = async (network) => {
     MakerV2Manager,
     {},
     config.contracts.ModuleRegistry,
-    GuardianStorageWrapper.contractAddress,
+    GuardianStorageWrapper.address,
     config.defi.maker.migration,
     config.defi.maker.pot,
     config.defi.maker.jug,
@@ -139,17 +139,17 @@ const deploy = async (network) => {
   // /////////////////////////////////////////////////
 
   configurator.updateModuleAddresses({
-    GuardianStorage: GuardianStorageWrapper.contractAddress,
-    TransferStorage: TransferStorageWrapper.contractAddress,
-    GuardianManager: GuardianManagerWrapper.contractAddress,
-    LockManager: LockManagerWrapper.contractAddress,
-    RecoveryManager: RecoveryManagerWrapper.contractAddress,
-    ApprovedTransfer: ApprovedTransferWrapper.contractAddress,
-    TransferManager: TransferManagerWrapper.contractAddress,
-    TokenExchanger: TokenExchangerWrapper.contractAddress,
-    NftTransfer: NftTransferWrapper.contractAddress,
-    CompoundManager: CompoundManagerWrapper.contractAddress,
-    MakerV2Manager: MakerV2ManagerWrapper.contractAddress,
+    GuardianStorage: GuardianStorageWrapper.address,
+    TransferStorage: TransferStorageWrapper.address,
+    GuardianManager: GuardianManagerWrapper.address,
+    LockManager: LockManagerWrapper.address,
+    RecoveryManager: RecoveryManagerWrapper.address,
+    ApprovedTransfer: ApprovedTransferWrapper.address,
+    TransferManager: TransferManagerWrapper.address,
+    TokenExchanger: TokenExchangerWrapper.address,
+    NftTransfer: NftTransferWrapper.address,
+    CompoundManager: CompoundManagerWrapper.address,
+    MakerV2Manager: MakerV2ManagerWrapper.address,
   });
 
   const gitHash = childProcess.execSync("git rev-parse HEAD").toString("utf8").replace(/\n$/, "");

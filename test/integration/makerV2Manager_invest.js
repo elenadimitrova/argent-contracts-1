@@ -53,7 +53,7 @@ describe("Test MakerV2 DSR", () => {
     owner = deployer.signer;
     const { config } = configurator;
 
-    const migration = await deployer.wrapDeployedContract(ScdMcdMigration, config.defi.maker.migration);
+    const migration = await ScdMcdMigration.at(config.defi.maker.migration);
     const vat = await migration.vat();
     const makerRegistry = await deployer.deploy(MakerRegistry, {}, vat);
     makerV2 = await deployer.deploy(
@@ -64,33 +64,40 @@ describe("Test MakerV2 DSR", () => {
       config.defi.maker.migration,
       config.defi.maker.pot,
       config.defi.maker.jug,
-      makerRegistry.contractAddress,
+      makerRegistry.address,
       config.defi.uniswap.factory,
       { gasLimit: 8000000 },
     );
 
-    const daiJoin = await deployer.wrapDeployedContract(Join, await migration.daiJoin());
-    const saiJoin = await deployer.wrapDeployedContract(Join, await migration.saiJoin());
-    daiToken = await deployer.wrapDeployedContract(DSToken, await daiJoin.dai());
-    saiToken = await deployer.wrapDeployedContract(DSToken, await saiJoin.gem());
+    const daiJoinAddress = await migration.daiJoin();
+    const daiJoin = await Join.at(daiJoinAddress);
+
+    const saiJoin = await migration.saiJoin();
+    const saiJoin = await Join.at(saiJoin);
+
+    const daiTokenAddress = await daiJoin.dai()
+    daiToken = await DSToken.at(daiTokenAddress);
+    const saiTokenAddress = await saiJoin.gem();
+    saiToken = await DSToken.at(saiTokenAddress);
 
     const daiBalance = await daiToken.balanceOf(owner.address);
     if (daiBalance.lt(parseEther("1"))) {
-      const uniswapFactory = await deployer.wrapDeployedContract(UniswapFactory, config.defi.uniswap.factory);
-      const daiExchange = await deployer.wrapDeployedContract(UniswapExchange, await uniswapFactory.getExchange(daiToken.contractAddress));
+      const uniswapFactory = await UniswapFactory.at(config.defi.uniswap.factory);
+      const uniswapExchangeAddress = await uniswapFactory.getExchange(daiToken.address);
+      const daiExchange = await UniswapExchange.at(uniswapExchangeAddress);
       await (await daiExchange.send(parseEther("0.02"), { gasLimit: 3000000 })).wait();
     }
 
     const saiBalance = await saiToken.balanceOf(owner.address);
     if (saiBalance.lt(parseEther("1"))) {
       const convertedToSai = (await daiToken.balanceOf(owner.address)).div(2);
-      await (await daiToken.approve(migration.contractAddress, convertedToSai)).wait();
+      await (await daiToken.approve(migration.address, convertedToSai)).wait();
       await (await migration.swapDaiToSai(convertedToSai)).wait();
     }
 
     wallet = await deployer.deploy(Wallet);
-    await (await wallet.init(owner.address, [makerV2.contractAddress])).wait();
-    walletAddress = wallet.contractAddress;
+    await (await wallet.init(owner.address, [makerV2.address])).wait();
+    walletAddress = wallet.address;
   });
 
   async function topUpDai() {

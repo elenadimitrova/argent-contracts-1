@@ -126,28 +126,28 @@ class Benchmark {
   }
 
   async setupWallet() {
-    this.oneModule = [this.RelayerModuleWrapper.contractAddress];
-    this.twoModules = [this.RelayerModuleWrapper.contractAddress, this.GuardianManagerWrapper.contractAddress];
+    this.oneModule = [this.RelayerModuleWrapper.address];
+    this.twoModules = [this.RelayerModuleWrapper.address, this.GuardianManagerWrapper.address];
     this.threeModules = [
-      this.RelayerModuleWrapper.contractAddress,
-      this.GuardianManagerWrapper.contractAddress,
-      this.RecoveryManagerWrapper.contractAddress];
+      this.RelayerModuleWrapper.address,
+      this.GuardianManagerWrapper.address,
+      this.RecoveryManagerWrapper.address];
     this.allModules = [
-      this.RelayerModuleWrapper.contractAddress,
-      this.GuardianManagerWrapper.contractAddress,
-      this.LockManagerWrapper.contractAddress,
-      this.RecoveryManagerWrapper.contractAddress,
-      this.ApprovedTransferWrapper.contractAddress,
-      this.TransferManagerWrapper.contractAddress,
-      this.TokenExchangerWrapper.contractAddress,
-      this.NftTransferWrapper.contractAddress,
-      this.CompoundManagerWrapper.contractAddress,
-      this.MakerV2ManagerWrapper.contractAddress,
+      this.RelayerModuleWrapper.address,
+      this.GuardianManagerWrapper.address,
+      this.LockManagerWrapper.address,
+      this.RecoveryManagerWrapper.address,
+      this.ApprovedTransferWrapper.address,
+      this.TransferManagerWrapper.address,
+      this.TokenExchangerWrapper.address,
+      this.NftTransferWrapper.address,
+      this.CompoundManagerWrapper.address,
+      this.MakerV2ManagerWrapper.address,
     ];
 
-    const proxy = await this.deployer.deploy(Proxy, {}, this.BaseWalletWrapper.contractAddress);
-    this.wallet = this.deployer.wrapDeployedContract(BaseWallet, proxy.contractAddress);
-    this.walletAddress = this.wallet.contractAddress;
+    const proxy = await this.deployer.deploy(Proxy, {}, this.BaseWalletWrapper.address);
+    this.wallet = this.deployer.wrapDeployedContract(BaseWallet, proxy.address);
+    this.walletAddress = this.wallet.address;
     await this.wallet.init(this.accounts[0], this.allModules);
     await this.wallet.send(ethers.utils.parseEther("1.0"));
   }

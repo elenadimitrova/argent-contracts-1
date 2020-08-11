@@ -58,44 +58,44 @@ contract("RelayerModule", (accounts) => {
   let badModule;
 
   before(async () => {
-    registry = await deployer.deploy(Registry);
-    guardianStorage = await deployer.deploy(GuardianStorage);
-    limitStorage = await deployer.deploy(LimitStorage);
-    tokenPriceStorage = await deployer.deploy(TokenPriceStorage);
+    registry = await Registry.new();
+    guardianStorage = await GuardianStorage.new();
+    limitStorage = await LimitStorage.new();
+    tokenPriceStorage = await TokenPriceStorage.new();
     await tokenPriceStorage.addManager(infrastructure);
-    relayerModule = await deployer.deploy(RelayerModule, {},
-      registry.contractAddress, guardianStorage.contractAddress, limitStorage.contractAddress, tokenPriceStorage.contractAddress);
+    relayerModule = await RelayerModule.new(
+      registry.address, guardianStorage.address, limitStorage.address, tokenPriceStorage.address);
     manager.setRelayerModule(relayerModule);
   });
 
   beforeEach(async () => {
-    approvedTransfer = await deployer.deploy(ApprovedTransfer, {},
-      registry.contractAddress,
-      guardianStorage.contractAddress,
-      limitStorage.contractAddress,
+    approvedTransfer = await ApprovedTransfer.new(
+      registry.address,
+      guardianStorage.address,
+      limitStorage.address,
       ethers.constants.AddressZero);
-    guardianManager = await deployer.deploy(GuardianManager, {}, registry.contractAddress, guardianStorage.contractAddress, 24, 12);
-    recoveryManager = await deployer.deploy(RecoveryManager, {}, registry.contractAddress, guardianStorage.contractAddress, 36, 120);
+    guardianManager = await GuardianManager.new(registry.address, guardianStorage.address, 24, 12);
+    recoveryManager = await RecoveryManager.new(registry.address, guardianStorage.address, 36, 120);
 
-    testModule = await deployer.deploy(TestModule, {}, registry.contractAddress, guardianStorage.contractAddress, false, 0);
-    testModuleNew = await deployer.deploy(TestModule, {}, registry.contractAddress, guardianStorage.contractAddress, false, 0);
-    testOnlyOwnerModule = await deployer.deploy(TestOnlyOwnerModule, {}, registry.contractAddress, guardianStorage.contractAddress);
-    limitModule = await deployer.deploy(TestLimitModule, {}, registry.contractAddress, guardianStorage.contractAddress, limitStorage.contractAddress);
-    badModule = await deployer.deploy(BadModule, {}, registry.contractAddress, guardianStorage.contractAddress);
+    testModule = await TestModule.new(registry.address, guardianStorage.address, false, 0);
+    testModuleNew = await TestModule.new(registry.address, guardianStorage.address, false, 0);
+    testOnlyOwnerModule = await TestOnlyOwnerModule.new(registry.address, guardianStorage.address);
+    limitModule = await TestLimitModule.new(registry.address, guardianStorage.address, limitStorage.address);
+    badModule = await BadModule.new(registry.address, guardianStorage.address);
 
-    const walletImplementation = await deployer.deploy(BaseWallet);
-    const proxy = await deployer.deploy(Proxy, {}, walletImplementation.contractAddress);
-    wallet = deployer.wrapDeployedContract(BaseWallet, proxy.contractAddress);
+    const walletImplementation = await BaseWallet.new();
+    const proxy = await Proxy.new(walletImplementation.address);
+    wallet = await BaseWallet.at(proxy.address);
 
     await wallet.init(owner,
-      [relayerModule.contractAddress,
-        approvedTransfer.contractAddress,
-        guardianManager.contractAddress,
-        recoveryManager.contractAddress,
-        testModule.contractAddress,
-        limitModule.contractAddress,
-        testOnlyOwnerModule.contractAddress,
-        badModule.contractAddress]);
+      [relayerModule.address,
+        approvedTransfer.address,
+        guardianManager.address,
+        recoveryManager.address,
+        testModule.address,
+        limitModule.address,
+        testOnlyOwnerModule.address,
+        badModule.address]);
   });
 
   describe("relaying module transactions", () => {
@@ -107,16 +107,16 @@ contract("RelayerModule", (accounts) => {
     });
 
     it("should fail when module is not authorised", async () => {
-      const params = [wallet.contractAddress, 2];
+      const params = [wallet.address, 2];
       await assert.revertWith(
         manager.relay(testModuleNew, "setIntOwnerOnly", params, wallet, [owner]), MODULE_NOT_AUTHORISED_FOR_WALLET,
       );
     });
 
     it("should fail when the RelayerModule is not authorised", async () => {
-      const wrongWallet = await deployer.deploy(BaseWallet);
-      await wrongWallet.init(owner, [testModule.contractAddress]);
-      const params = [wrongWallet.contractAddress, 2];
+      const wrongWallet = await BaseWallet.new();
+      await wrongWallet.init(owner, [testModule.address]);
+      const params = [wrongWallet.address, 2];
       const txReceipt = await manager.relay(testModule, "setIntOwnerOnly", params, wrongWallet, [owner]);
       const { success, error } = parseRelayReceipt(txReceipt);
       assert.isFalse(success);
@@ -131,7 +131,7 @@ contract("RelayerModule", (accounts) => {
     });
 
     it("should fail when the gas of the transaction is less then the gasLimit ", async () => {
-      const params = [wallet.contractAddress, 2];
+      const params = [wallet.address, 2];
       const nonce = await getNonceForRelay();
       const gasLimit = 2000000;
       const relayParams = [
@@ -152,13 +152,13 @@ contract("RelayerModule", (accounts) => {
     });
 
     it("should fail when a wrong number of signatures is provided", async () => {
-      const params = [wallet.contractAddress, 2];
+      const params = [wallet.address, 2];
       const relayParams = [testModule, "setIntOwnerOnly", params, wallet, [owner, recipient]];
       await assert.revertWith(manager.relay(...relayParams), WRONG_NUMBER_SIGNATURES);
     });
 
     it("should fail a duplicate transaction", async () => {
-      const params = [wallet.contractAddress, 2];
+      const params = [wallet.address, 2];
       const nonce = await getNonceForRelay();
       const relayParams = [testModule, "setIntOwnerOnly", params, wallet, [owner],
         accounts[9], false, 2000000, nonce];
@@ -170,11 +170,11 @@ contract("RelayerModule", (accounts) => {
 
     it("should fail when relaying to itself", async () => {
       const dataMethod = "setIntOwnerOnly";
-      const dataParam = [wallet.contractAddress, 2];
+      const dataParam = [wallet.address, 2];
       const methodData = testModule.contract.interface.functions[dataMethod].encode(dataParam);
       const params = [
-        wallet.contractAddress,
-        testModule.contractAddress,
+        wallet.address,
+        testModule.address,
         methodData,
         0,
         ethers.constants.HashZero,
@@ -190,10 +190,10 @@ contract("RelayerModule", (accounts) => {
 
     it("should update the nonce after the transaction", async () => {
       const nonce = await getNonceForRelay();
-      await manager.relay(testModule, "setIntOwnerOnly", [wallet.contractAddress, 2], wallet, [owner],
+      await manager.relay(testModule, "setIntOwnerOnly", [wallet.address, 2], wallet, [owner],
         accounts[9], false, 2000000, nonce);
 
-      const updatedNonce = await relayerModule.getNonce(wallet.contractAddress);
+      const updatedNonce = await relayerModule.getNonce(wallet.address);
       const updatedNonceHex = await ethers.utils.hexZeroPad(updatedNonce.toHexString(), 32);
       assert.equal(nonce, updatedNonceHex);
     });
@@ -204,9 +204,9 @@ contract("RelayerModule", (accounts) => {
     beforeEach(async () => {
       const decimals = 12; // number of decimal for TOKN contract
       const tokenRate = new BN(10).pow(new BN(19)).muln(51); // 1 TOKN = 0.00051 ETH = 0.00051*10^18 ETH wei => *10^(18-decimals) = 0.00051*10^18 * 10^6 = 0.00051*10^24 = 51*10^19
-      erc20 = await deployer.deploy(ERC20, {}, [infrastructure], 10000000, decimals); // TOKN contract with 10M tokens (10M TOKN for account[0])
-      await tokenPriceStorage.setPrice(erc20.contractAddress, tokenRate.toString());
-      await limitModule.setLimitAndDailySpent(wallet.contractAddress, 10000000000, 0);
+      erc20 = await ERC20.new([infrastructure], 10000000, decimals); // TOKN contract with 10M tokens (10M TOKN for account[0])
+      await tokenPriceStorage.setPrice(erc20.address, tokenRate.toString());
+      await limitModule.setLimitAndDailySpent(wallet.address, 10000000000, 0);
     });
 
     async function provisionFunds(ethAmount, erc20Amount) {
@@ -214,7 +214,7 @@ contract("RelayerModule", (accounts) => {
         await wallet.send(ethAmount);
       }
       if (erc20Amount) {
-        await erc20.transfer(wallet.contractAddress, erc20Amount);
+        await erc20.transfer(wallet.address, erc20Amount);
       }
     }
 
@@ -223,7 +223,7 @@ contract("RelayerModule", (accounts) => {
       const relayParams = [
         testModule,
         "setIntOwnerOnly",
-        [wallet.contractAddress, 2],
+        [wallet.address, 2],
         wallet,
         [owner],
         accounts[9],
@@ -238,15 +238,15 @@ contract("RelayerModule", (accounts) => {
     }
 
     async function setLimitAndDailySpent({ limit, alreadySpent }) {
-      await limitModule.setLimitAndDailySpent(wallet.contractAddress, limit, alreadySpent);
+      await limitModule.setLimitAndDailySpent(wallet.address, limit, alreadySpent);
     }
 
     it("should refund in ETH", async () => {
       await provisionFunds(ethers.BigNumber.from("100000000000000"), 0);
-      const wBalanceStart = await deployer.provider.getBalance(wallet.contractAddress);
+      const wBalanceStart = await deployer.provider.getBalance(wallet.address);
       const rBalanceStart = await deployer.provider.getBalance(recipient);
       await callAndRefund({ refundToken: ETH_TOKEN });
-      const wBalanceEnd = await deployer.provider.getBalance(wallet.contractAddress);
+      const wBalanceEnd = await deployer.provider.getBalance(wallet.address);
       const rBalanceEnd = await deployer.provider.getBalance(recipient);
       const refund = wBalanceStart.sub(wBalanceEnd);
       assert.isTrue(refund.gt(0), "should have refunded ETH");
@@ -255,10 +255,10 @@ contract("RelayerModule", (accounts) => {
 
     it("should refund in ERC20", async () => {
       await provisionFunds(0, ethers.BigNumber.from("100000000000000"));
-      const wBalanceStart = await erc20.balanceOf(wallet.contractAddress);
+      const wBalanceStart = await erc20.balanceOf(wallet.address);
       const rBalanceStart = await erc20.balanceOf(recipient);
-      await callAndRefund({ refundToken: erc20.contractAddress });
-      const wBalanceEnd = await erc20.balanceOf(wallet.contractAddress);
+      await callAndRefund({ refundToken: erc20.address });
+      const wBalanceEnd = await erc20.balanceOf(wallet.address);
       const rBalanceEnd = await erc20.balanceOf(recipient);
       const refund = wBalanceStart.sub(wBalanceEnd);
       assert.isTrue(refund.gt(0), "should have refunded ERC20");
@@ -278,16 +278,16 @@ contract("RelayerModule", (accounts) => {
 
     it("should fail the transaction when when there is not enough ERC20 for the refund", async () => {
       await provisionFunds(0, ethers.BigNumber.from("10"));
-      await assert.revertWith(callAndRefund({ refundToken: erc20.contractAddress }), "ERC20: transfer amount exceeds balance");
+      await assert.revertWith(callAndRefund({ refundToken: erc20.address }), "ERC20: transfer amount exceeds balance");
     });
 
     it("should include the refund in the daily limit", async () => {
       await provisionFunds(ethers.BigNumber.from("100000000000"), 0);
       await setLimitAndDailySpent({ limit: 1000000000, alreadySpent: 10 });
-      let dailySpent = await limitModule.getDailySpent(wallet.contractAddress);
+      let dailySpent = await limitModule.getDailySpent(wallet.address);
       assert.isTrue(dailySpent.toNumber() === 10, "initial daily spent should be 10");
       await callAndRefund({ refundToken: ETH_TOKEN });
-      dailySpent = await limitModule.getDailySpent(wallet.contractAddress);
+      dailySpent = await limitModule.getDailySpent(wallet.address);
       assert.isTrue(dailySpent > 10, "Daily spent should be greater then 10");
     });
 
@@ -295,13 +295,13 @@ contract("RelayerModule", (accounts) => {
       // set funds and limit/daily spent
       await provisionFunds(ethers.BigNumber.from("100000000000"), 0);
       await setLimitAndDailySpent({ limit: 1000000000, alreadySpent: 10 });
-      let dailySpent = await limitModule.getDailySpent(wallet.contractAddress);
+      let dailySpent = await limitModule.getDailySpent(wallet.address);
       assert.isTrue(dailySpent.toNumber() === 10, "initial daily spent should be 10");
       const rBalanceStart = await deployer.provider.getBalance(recipient);
       // add a guardian
-      await guardianManager.from(owner).addGuardian(wallet.contractAddress, guardian);
+      await guardianManager.from(owner).addGuardian(wallet.address, guardian);
       // call approvedTransfer
-      const params = [wallet.contractAddress, ETH_TOKEN, recipient, 1000, ethers.constants.HashZero];
+      const params = [wallet.address, ETH_TOKEN, recipient, 1000, ethers.constants.HashZero];
       const nonce = await getNonceForRelay();
       const gasLimit = 2000000;
       const relayParams = [
@@ -319,7 +319,7 @@ contract("RelayerModule", (accounts) => {
         ethers.constants.AddressZero,
         gasLimit * 1.1];
       await manager.relay(...relayParams);
-      dailySpent = await limitModule.getDailySpent(wallet.contractAddress);
+      dailySpent = await limitModule.getDailySpent(wallet.address);
       assert.isTrue(dailySpent.toNumber() === 0, "daily spent should be reset");
       const rBalanceEnd = await deployer.provider.getBalance(recipient);
       assert.isTrue(rBalanceEnd.gt(rBalanceStart), "should have refunded the recipient");
@@ -327,14 +327,14 @@ contract("RelayerModule", (accounts) => {
 
     it("should fail if required signatures is 0 and OwnerRequirement is not Anyone", async () => {
       await assert.revertWith(
-        manager.relay(badModule, "setIntOwnerOnly", [wallet.contractAddress, 2], wallet, [owner]), "RM: Wrong signature requirement",
+        manager.relay(badModule, "setIntOwnerOnly", [wallet.address, 2], wallet, [owner]), "RM: Wrong signature requirement",
       );
     });
 
     it("should fail the transaction when the refund is over the daily limit", async () => {
       await provisionFunds(ethers.BigNumber.from("100000000000"), 0);
       await setLimitAndDailySpent({ limit: 1000000000, alreadySpent: 999999990 });
-      const dailySpent = await limitModule.getDailySpent(wallet.contractAddress);
+      const dailySpent = await limitModule.getDailySpent(wallet.address);
       assert.isTrue(dailySpent.toNumber() === 999999990, "initial daily spent should be 999999990");
       await assert.revertWith(callAndRefund({ refundToken: ETH_TOKEN }), "RM: refund is above daily limit");
     });
@@ -342,43 +342,43 @@ contract("RelayerModule", (accounts) => {
 
   describe("addModule transactions", () => {
     it("should succeed when relayed on OnlyOwnerModule modules", async () => {
-      await registry.registerModule(testModuleNew.contractAddress, formatBytes32String("testModuleNew"));
-      const params = [wallet.contractAddress, testModuleNew.contractAddress];
+      await registry.registerModule(testModuleNew.address, formatBytes32String("testModuleNew"));
+      const params = [wallet.address, testModuleNew.address];
       await manager.relay(testOnlyOwnerModule, "addModule", params, wallet, [owner]);
 
-      const isModuleAuthorised = await wallet.authorised(testModuleNew.contractAddress);
+      const isModuleAuthorised = await wallet.authorised(testModuleNew.address);
       assert.isTrue(isModuleAuthorised);
     });
 
     it("should succeed when called directly on OnlyOwnerModule modules", async () => {
-      await registry.registerModule(testModuleNew.contractAddress, formatBytes32String("testModuleNew"));
-      await testOnlyOwnerModule.from(owner).addModule(wallet.contractAddress, testModuleNew.contractAddress);
+      await registry.registerModule(testModuleNew.address, formatBytes32String("testModuleNew"));
+      await testOnlyOwnerModule.from(owner).addModule(wallet.address, testModuleNew.address);
 
-      const isModuleAuthorised = await wallet.authorised(testModuleNew.contractAddress);
+      const isModuleAuthorised = await wallet.authorised(testModuleNew.address);
       assert.isTrue(isModuleAuthorised);
     });
 
     it("should fail when relayed on non-OnlyOwnerModule modules", async () => {
-      await registry.registerModule(testModuleNew.contractAddress, formatBytes32String("testModuleNew"));
-      const params = [wallet.contractAddress, testModuleNew.contractAddress];
+      await registry.registerModule(testModuleNew.address, formatBytes32String("testModuleNew"));
+      const params = [wallet.address, testModuleNew.address];
       const txReceipt = await manager.relay(approvedTransfer, "addModule", params, wallet, [owner]);
       const { success, error } = parseRelayReceipt(txReceipt);
       assert.isFalse(success);
       assert.equal(error, "BM: must be wallet owner");
 
-      const isModuleAuthorised = await wallet.authorised(testModuleNew.contractAddress);
+      const isModuleAuthorised = await wallet.authorised(testModuleNew.address);
       assert.isFalse(isModuleAuthorised);
     });
 
     it("should succeed when called directly on non-OnlyOwnerModule modules", async () => {
-      await registry.registerModule(testModuleNew.contractAddress, formatBytes32String("testModuleNew"));
-      await approvedTransfer.from(owner).addModule(wallet.contractAddress, testModuleNew.contractAddress);
-      const isModuleAuthorised = await wallet.authorised(testModuleNew.contractAddress);
+      await registry.registerModule(testModuleNew.address, formatBytes32String("testModuleNew"));
+      await approvedTransfer.from(owner).addModule(wallet.address, testModuleNew.address);
+      const isModuleAuthorised = await wallet.authorised(testModuleNew.address);
       assert.isTrue(isModuleAuthorised);
     });
 
     it("should fail to add module which is not registered", async () => {
-      await assert.revertWith(approvedTransfer.from(owner).addModule(wallet.contractAddress, testModuleNew.contractAddress),
+      await assert.revertWith(approvedTransfer.from(owner).addModule(wallet.address, testModuleNew.address),
         "BM: module is not registered");
     });
   });
