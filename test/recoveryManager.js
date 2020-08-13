@@ -32,7 +32,6 @@ contract("RecoveryManager", (accounts) => {
   const nonowner = accounts[6];
   const nonowner2 = accounts[9];
 
-  let deployer;
   let registry;
   let guardianManager;
   let guardianStorage;
@@ -44,7 +43,6 @@ contract("RecoveryManager", (accounts) => {
   let relayerModule;
 
   before(async () => {
-    deployer = manager.newDeployer();
     walletImplementation = await BaseWallet.new();
   });
 
@@ -60,7 +58,8 @@ contract("RecoveryManager", (accounts) => {
       registry.address,
       guardianStorage.address,
       ethers.constants.AddressZero,
-      ethers.constants.AddressZero);
+      ethers.constants.AddressZero,
+    );
     manager.setRelayerModule(relayerModule);
 
     const proxy = await Proxy.new(walletImplementation.address);

@@ -26,7 +26,6 @@ contract("NftTransfer", (accounts) => {
   const eoaRecipient = accounts[3];
   const tokenId = 1;
 
-  let deployer;
   let nftModule;
   let walletImplementation;
   let relayerModule;
@@ -39,7 +38,6 @@ contract("NftTransfer", (accounts) => {
   let erc20Approver;
 
   before(async () => {
-    deployer = manager.newDeployer();
     const registry = await Registry.new();
     walletImplementation = await BaseWallet.new();
 
@@ -48,13 +46,15 @@ contract("NftTransfer", (accounts) => {
       registry.address,
       guardianStorage.address,
       ethers.constants.AddressZero,
-      ethers.constants.AddressZero);
+      ethers.constants.AddressZero,
+    );
     manager.setRelayerModule(relayerModule);
     ck = await CK.new();
     nftModule = await NftModule.new(
       registry.address,
       guardianStorage.address,
-      ck.address);
+      ck.address,
+    );
     erc20Approver = await ERC20Approver.new(registry.address);
   });
 

@@ -72,10 +72,10 @@ describe("Test MakerV2 DSR", () => {
     const daiJoinAddress = await migration.daiJoin();
     const daiJoin = await Join.at(daiJoinAddress);
 
-    const saiJoin = await migration.saiJoin();
-    const saiJoin = await Join.at(saiJoin);
+    const saiJoinAddress = await migration.saiJoin();
+    const saiJoin = await Join.at(saiJoinAddress);
 
-    const daiTokenAddress = await daiJoin.dai()
+    const daiTokenAddress = await daiJoin.dai();
     daiToken = await DSToken.at(daiTokenAddress);
     const saiTokenAddress = await saiJoin.gem();
     saiToken = await DSToken.at(saiTokenAddress);

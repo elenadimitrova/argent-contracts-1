@@ -19,7 +19,6 @@ contract("LockManager", (accounts) => {
   const guardian1 = accounts[2];
   const nonguardian = accounts[3];
 
-  let deployer;
   let guardianManager;
   let guardianStorage;
   let registry;
@@ -30,7 +29,6 @@ contract("LockManager", (accounts) => {
   let relayerModule;
 
   before(async () => {
-    deployer = manager.newDeployer();
     walletImplementation = await BaseWallet.new();
   });
 
@@ -44,7 +42,8 @@ contract("LockManager", (accounts) => {
       registry.address,
       guardianStorage.address,
       ethers.constants.AddressZero,
-      ethers.constants.AddressZero);
+      ethers.constants.AddressZero,
+    );
     manager.setRelayerModule(relayerModule);
     const proxy = await Proxy.new(walletImplementation.address);
     wallet = await BaseWallet.at(proxy.address);

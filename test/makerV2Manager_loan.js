@@ -109,7 +109,8 @@ contract("MakerV2Loan", (accounts) => {
       3600,
       10000,
       AddressZero,
-      AddressZero);
+      AddressZero,
+    );
 
     walletImplementation = await BaseWallet.new();
 
@@ -117,7 +118,8 @@ contract("MakerV2Loan", (accounts) => {
       registry.address,
       guardianStorage.address,
       ethers.constants.AddressZero,
-      ethers.constants.AddressZero);
+      ethers.constants.AddressZero,
+    );
     manager.setRelayerModule(relayerModule);
   });
 

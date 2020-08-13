@@ -36,7 +36,6 @@ contract("Invest Manager with Compound", (accounts) => {
   const liquidityProvider = accounts[2];
   const borrower = accounts[3];
 
-  let deployer;
   let wallet;
   let walletImplementation;
   let registry;
@@ -50,12 +49,10 @@ contract("Invest Manager with Compound", (accounts) => {
   let oracleProxy;
 
   before(async () => {
-    deployer = manager.newDeployer();
-
     /* Deploy Compound V2 Architecture */
 
     // deploy price oracle
-    const oracle = await PriceOracle);
+    const oracle = await PriceOracle.new();
 
     // deploy comptroller
     const comptrollerProxy = await Unitroller.new();
@@ -93,7 +90,7 @@ contract("Invest Manager with Compound", (accounts) => {
     await comptroller._supportMarket(cEther.address);
     await comptroller._supportMarket(cToken.address);
     // deploy Price Oracle proxy
-    oracleProxy = await PriceOracleProxy, {}, comptroller.address, oracle.address, cEther.address);
+    oracleProxy = await PriceOracleProxy.new(comptroller.address, oracle.address, cEther.address);
     await comptroller._setPriceOracle(oracleProxy.address);
     // set collateral factor
     await comptroller._setCollateralFactor(cToken.address, WAD.div(10));
@@ -124,7 +121,8 @@ contract("Invest Manager with Compound", (accounts) => {
       registry.address,
       guardianStorage.address,
       ethers.constants.AddressZero,
-      ethers.constants.AddressZero);
+      ethers.constants.AddressZero,
+    );
     manager.setRelayerModule(relayerModule);
   });
 

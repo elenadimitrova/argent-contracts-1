@@ -26,7 +26,6 @@ contract("SimpleUpgrader", (accounts) => {
   const manager = new TestManager();
 
   const owner = accounts[1];
-  let deployer;
   let registry;
   let guardianStorage;
   let walletImplementation;
@@ -34,7 +33,6 @@ contract("SimpleUpgrader", (accounts) => {
   let relayerModule;
 
   before(async () => {
-    deployer = manager.newDeployer();
     walletImplementation = await BaseWallet.new();
   });
 
@@ -48,7 +46,8 @@ contract("SimpleUpgrader", (accounts) => {
       registry.address,
       guardianStorage.address,
       ethers.constants.AddressZero,
-      ethers.constants.AddressZero);
+      ethers.constants.AddressZero,
+    );
     manager.setRelayerModule(relayerModule);
   });
 

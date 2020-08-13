@@ -12,7 +12,6 @@ const ENSReverseRegistrar = artifacts.require("ReverseRegistrar");
 const Factory = artifacts.require("WalletFactory");
 const GuardianStorage = artifacts.require("GuardianStorage");
 
-const TestManager = require("../utils/test-manager");
 const utils = require("../utils/utilities.js");
 
 const ZERO_BYTES32 = ethers.constants.HashZero;
@@ -20,8 +19,6 @@ const ZERO_ADDRESS = ethers.constants.AddressZero;
 const NO_ENS = "";
 
 contract("WalletFactory", (accounts) => {
-  const manager = new TestManager();
-
   const infrastructure = accounts[0];
   const owner = accounts[1];
   const guardian = accounts[4];
@@ -71,7 +68,8 @@ contract("WalletFactory", (accounts) => {
       moduleRegistry.address,
       implementation.address,
       ensManager.address,
-      guardianStorage.address);
+      guardianStorage.address,
+    );
     await factory.addManager(infrastructure);
     await ensManager.addManager(factory.address);
   });
@@ -95,7 +93,8 @@ contract("WalletFactory", (accounts) => {
         ZERO_ADDRESS,
         implementation.address,
         ensManager.address,
-        guardianStorage.address), "WF: ModuleRegistry address not defined");
+        guardianStorage.address,
+      ), "WF: ModuleRegistry address not defined");
     });
 
     it("should not allow to be created with empty WalletImplementation", async () => {
@@ -103,7 +102,8 @@ contract("WalletFactory", (accounts) => {
         moduleRegistry.address,
         ZERO_ADDRESS,
         ensManager.address,
-        guardianStorage.address), "WF: WalletImplementation address not defined");
+        guardianStorage.address,
+      ), "WF: WalletImplementation address not defined");
     });
 
     it("should not allow to be created with empty ENSManager", async () => {
@@ -111,7 +111,8 @@ contract("WalletFactory", (accounts) => {
         moduleRegistry.address,
         implementation.address,
         ZERO_ADDRESS,
-        guardianStorage.address), "WF: ENSManager address not defined");
+        guardianStorage.address,
+      ), "WF: ENSManager address not defined");
     });
 
     it("should not allow to be created with empty GuardianStorage", async () => {
@@ -119,7 +120,8 @@ contract("WalletFactory", (accounts) => {
         moduleRegistry.address,
         implementation.address,
         ensManager.address,
-        ZERO_ADDRESS), "WF: GuardianStorage address not defined");
+        ZERO_ADDRESS,
+      ), "WF: GuardianStorage address not defined");
     });
 
     it("should allow owner to change the module registry", async () => {

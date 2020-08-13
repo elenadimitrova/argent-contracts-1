@@ -55,12 +55,14 @@ contract("ApprovedTransfer", (accounts) => {
       registry.address,
       guardianStorage.address,
       limitStorage.address,
-      weth.address);
+      weth.address,
+    );
     relayerModule = await RelayerModule.new(
       registry.address,
       guardianStorage.address,
       limitStorage.address,
-      ethers.constants.AddressZero);
+      ethers.constants.AddressZero,
+    );
     manager.setRelayerModule(relayerModule);
     walletImplementation = await BaseWallet.new();
 

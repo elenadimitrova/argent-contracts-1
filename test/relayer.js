@@ -64,7 +64,8 @@ contract("RelayerModule", (accounts) => {
     tokenPriceStorage = await TokenPriceStorage.new();
     await tokenPriceStorage.addManager(infrastructure);
     relayerModule = await RelayerModule.new(
-      registry.address, guardianStorage.address, limitStorage.address, tokenPriceStorage.address);
+      registry.address, guardianStorage.address, limitStorage.address, tokenPriceStorage.address,
+    );
     manager.setRelayerModule(relayerModule);
   });
 
@@ -73,7 +74,8 @@ contract("RelayerModule", (accounts) => {
       registry.address,
       guardianStorage.address,
       limitStorage.address,
-      ethers.constants.AddressZero);
+      ethers.constants.AddressZero,
+    );
     guardianManager = await GuardianManager.new(registry.address, guardianStorage.address, 24, 12);
     recoveryManager = await RecoveryManager.new(registry.address, guardianStorage.address, 36, 120);
 
