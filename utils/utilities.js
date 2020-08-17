@@ -135,4 +135,10 @@ module.exports = {
       32,
     );
   },
+
+  async getTimestamp(blockNumber) {
+    const blockN = !blockNumber ? "latest" : blockNumber;
+    const { timestamp } = await web3.eth.getBlock(blockN);
+    return timestamp;
+  }
 };

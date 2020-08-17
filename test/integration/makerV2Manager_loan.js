@@ -33,7 +33,7 @@ const DSToken = artifacts.require("DSToken");
 
 const { parseEther, formatBytes32String } = ethers.utils;
 const { HashZero } = ethers.constants;
-const { bigNumToBytes32, ETH_TOKEN } = require("../../utils/utilities.js");
+const { bigNumToBytes32, ETH_TOKEN, getTimestamp } = require("../../utils/utilities.js");
 const { RAY } = require("../../utils/defi-deployer");
 
 const DEFAULT_NETWORK = "kovan-fork"; // also works on kovan (faster, but uses real KETH)
@@ -152,8 +152,7 @@ describe("Test MakerV2 Vaults", () => {
     const afterDAI = await daiToken.balanceOf(owner);
     if (afterDAI.gt(0)) {
       await (await daiToken.approve(daiExchange.address, afterDAI)).wait();
-      const currentBlock = await testManager.getCurrentBlock();
-      const timestamp = await testManager.getTimestamp(currentBlock);
+      const timestamp = await getTimestamp();
       await (await daiExchange.tokenToEthSwapInput(afterDAI, 1, timestamp + 24 * 3600, { gasLimit: 3000000 })).wait();
     }
   }
