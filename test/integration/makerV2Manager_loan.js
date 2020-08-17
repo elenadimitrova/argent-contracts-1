@@ -33,7 +33,7 @@ const DSToken = artifacts.require("DSToken");
 
 const { parseEther, formatBytes32String } = ethers.utils;
 const { HashZero } = ethers.constants;
-const { bigNumToBytes32, ETH_TOKEN, getTimestamp } = require("../../utils/utilities.js");
+const { bigNumToBytes32, ETH_TOKEN, getTimestamp, increaseTime } = require("../../utils/utilities.js");
 const { RAY } = require("../../utils/defi-deployer");
 
 const DEFAULT_NETWORK = "kovan-fork"; // also works on kovan (faster, but uses real KETH)
@@ -376,7 +376,7 @@ describe("Test MakerV2 Vaults", () => {
         // give some ETH to the wallet to be used for repayment
         await (await wallet.send(collateralAmount)).wait();
       }
-      await testManager.increaseTime(3); // wait 3 seconds
+      await increaseTime(3); // wait 3 seconds
       const beforeDAI = await daiToken.balanceOf(wallet.address);
       const beforeETH = await deployer.provider.getBalance(wallet.address);
       await testChangeDebt({
@@ -418,7 +418,7 @@ describe("Test MakerV2 Vaults", () => {
           walletAddress, daiToken.address, owner, daiAmount, HashZero, { gasLimit: 3000000 },
         )).wait();
       }
-      await testManager.increaseTime(3); // wait 3 seconds
+      await increaseTime(3); // wait 3 seconds
       const beforeDAI = await daiToken.balanceOf(wallet.address);
       const beforeETH = await deployer.provider.getBalance(wallet.address);
       const method = "closeLoan";
@@ -473,7 +473,7 @@ describe("Test MakerV2 Vaults", () => {
         await testOpenLoan({
           collateralAmount, daiAmount, collateral: batToken, relayed: false,
         });
-        await testManager.increaseTime(3); // wait 3 seconds
+        await increaseTime(3); // wait 3 seconds
       });
     });
 

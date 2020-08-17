@@ -1,7 +1,7 @@
 /* global artifacts */
 
 const ethers = require("ethers");
-const { bigNumToBytes32, ETH_TOKEN, parseLogs } = require("../utils/utilities.js");
+const { bigNumToBytes32, ETH_TOKEN, parseLogs, increaseTime } = require("../utils/utilities.js");
 const {
   deployMaker, deployUniswap, RAY, ETH_PER_DAI, ETH_PER_MKR,
 } = require("../utils/defi-deployer");
@@ -415,7 +415,7 @@ contract("MakerV2Loan", (accounts) => {
       // give some ETH to the wallet to be used for repayment
       await wallet.send(collateralAmount);
     }
-    await manager.increaseTime(3); // wait 3 seconds
+    await increaseTime(3); // wait 3 seconds
     const beforeDAI = await dai.balanceOf(wallet.address);
     const beforeETH = await deployer.provider.getBalance(wallet.address);
     await testChangeDebt({
@@ -478,7 +478,7 @@ contract("MakerV2Loan", (accounts) => {
       // move the borrowed DAI from the wallet to the owner
       await transferManager.from(owner).transferToken(walletAddress, dai.address, owner, daiAmount, HashZero, { gasLimit: 3000000 });
     }
-    await manager.increaseTime(3); // wait 3 seconds
+    await increaseTime(3); // wait 3 seconds
     const beforeDAI = await dai.balanceOf(wallet.address);
     const beforeETH = await deployer.provider.getBalance(wallet.address);
     const method = "closeLoan";

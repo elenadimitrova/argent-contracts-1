@@ -25,7 +25,7 @@ const TestManager = require("../utils/test-manager");
 const MultisigExecutor = require("../utils/multisigexecutor.js");
 
 const ETH_TOKEN = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
-const { sortWalletByAddress } = require("../utils/utilities.js");
+const { sortWalletByAddress, increaseTime } = require("../utils/utilities.js");
 
 class Logger {
   constructor() {
@@ -193,7 +193,7 @@ class Benchmark {
     this._logger.addItem("Request add second guardian (direct)", gasUsed);
 
     await this.GuardianManagerWrapper.addGuardian(this.walletAddress, this.accounts[2]);
-    await this.testManager.increaseTime(this.config.settings.securityPeriod + this.config.settings.securityWindow / 2);
+    await increaseTime(this.config.settings.securityPeriod + this.config.settings.securityWindow / 2);
 
     gasUsed = await this.GuardianManagerWrapper.estimate.confirmGuardianAddition(this.walletAddress, this.accounts[2]);
     this._logger.addItem("Confirm add second guardian (direct)", gasUsed);
@@ -206,7 +206,7 @@ class Benchmark {
     this._logger.addItem("Request revoke guardian (direct)", gasUsed);
 
     await this.GuardianManagerWrapper.revokeGuardian(this.walletAddress, this.accounts[1]);
-    await this.testManager.increaseTime(this.config.settings.securityPeriod + this.config.settings.securityWindow / 2);
+    await increaseTime(this.config.settings.securityPeriod + this.config.settings.securityWindow / 2);
 
     gasUsed = await this.GuardianManagerWrapper.estimate.confirmGuardianRevokation(this.walletAddress, this.accounts[1]);
     this._logger.addItem("Confirm revoke guardian (direct)", gasUsed);
@@ -294,7 +294,7 @@ class Benchmark {
     // add guardians
     await this.GuardianManagerWrapper.addGuardian(this.walletAddress, this.accounts[1]);
     await this.GuardianManagerWrapper.addGuardian(this.walletAddress, this.accounts[2]);
-    await this.testManager.increaseTime(this.config.settings.securityPeriod + this.config.settings.securityWindow / 2);
+    await increaseTime(this.config.settings.securityPeriod + this.config.settings.securityWindow / 2);
     await this.GuardianManagerWrapper.confirmGuardianAddition(this.walletAddress, this.accounts[2]);
 
     // estimate execute recovery
@@ -319,7 +319,7 @@ class Benchmark {
   async estimateETHTransferNoLimitDirect() {
     // disable limit
     await this.TransferManagerWrapper.disableLimit(this.walletAddress);
-    await this.testManager.increaseTime(this.config.settings.securityPeriod + 1);
+    await increaseTime(this.config.settings.securityPeriod + 1);
 
     // transfer
     const gasUsed = await this.TransferManagerWrapper.estimate.transferToken(
@@ -331,7 +331,7 @@ class Benchmark {
   async estimateTransferNoLimitRelayed() {
     // disable limit
     await this.TransferManagerWrapper.disableLimit(this.walletAddress);
-    await this.testManager.increaseTime(this.config.settings.securityPeriod + 1);
+    await increaseTime(this.config.settings.securityPeriod + 1);
 
     // transfer
     const gasUsed = await this.relayEstimate(
@@ -364,7 +364,7 @@ class Benchmark {
 
   async estimateETHTransferToWhitelistedAccountDirect() {
     await this.TransferManagerWrapper.addToWhitelist(this.walletAddress, this.accounts[3]);
-    await this.testManager.increaseTime(this.config.settings.securityPeriod + 1);
+    await increaseTime(this.config.settings.securityPeriod + 1);
 
     const gasUsed = await this.TransferManagerWrapper.estimate.transferToken(
       this.walletAddress, ETH_TOKEN, this.accounts[3], 2000000, "0x",
@@ -374,7 +374,7 @@ class Benchmark {
 
   async estimateTransferToWhitelistedAccountRelayed() {
     await this.TransferManagerWrapper.addToWhitelist(this.walletAddress, this.accounts[3]);
-    await this.testManager.increaseTime(this.config.settings.securityPeriod + 1);
+    await increaseTime(this.config.settings.securityPeriod + 1);
 
     const gasUsed = await this.relayEstimate(
       this.TransferManagerWrapper,
@@ -399,7 +399,7 @@ class Benchmark {
   //     const block = result.blockNumber;
   //     console.log(block);
 
-  //     await this.testManager.increaseTime(this.config.settings.securityPeriod + this.config.settings.securityWindow/2);
+  //     await increaseTime(this.config.settings.securityPeriod + this.config.settings.securityWindow/2);
   //     const gasUsed = await this.TokenTransferWrapper.estimate.executePendingTransfer(this.walletAddress, ETH_TOKEN, this.accounts[2], 2000000, "0x", block);
   //     this._logger.addItem("Execute ETH large transfer to untrusted account", gasUsed);
   // }
@@ -425,7 +425,7 @@ class Benchmark {
     await this.GuardianManagerWrapper.addGuardian(this.walletAddress, this.accounts[2]);
     await this.GuardianManagerWrapper.addGuardian(this.walletAddress, this.accounts[3]);
 
-    await this.testManager.increaseTime(this.config.settings.securityPeriod + this.config.settings.securityWindow / 2);
+    await increaseTime(this.config.settings.securityPeriod + this.config.settings.securityWindow / 2);
 
     await this.GuardianManagerWrapper.confirmGuardianAddition(this.walletAddress, this.accounts[2]);
     await this.GuardianManagerWrapper.confirmGuardianAddition(this.walletAddress, this.accounts[3]);

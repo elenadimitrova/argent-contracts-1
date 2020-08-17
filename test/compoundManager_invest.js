@@ -25,7 +25,7 @@ const ETH_EXCHANGE_RATE = ethers.BigNumber.from("200000000000000000000000000");
 
 const ERC20 = artifacts.require("TestERC20");
 
-const { ETH_TOKEN } = require("../utils/utilities.js");
+const { ETH_TOKEN, increaseTime } = require("../utils/utilities.js");
 const TestManager = require("../utils/test-manager");
 
 contract("Invest Manager with Compound", (accounts) => {
@@ -166,7 +166,7 @@ contract("Invest Manager with Compound", (accounts) => {
         assert.isTrue(await utils.hasEvent(txReceipt, cToken, "Borrow"), "should have generated Borrow event");
       }
       // increase time to accumulate interests
-      await manager.increaseTime(3600 * 24 * days);
+      await increaseTime(3600 * 24 * days);
       await cToken.accrueInterest();
       await cEther.accrueInterest();
     }
