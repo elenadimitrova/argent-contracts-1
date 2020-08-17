@@ -6,7 +6,7 @@
 
 set -e # stop the script if any subprocess fails
 
-etherlime compile --runs 999
+npm run cc
 
 FILE=$1
 shift
