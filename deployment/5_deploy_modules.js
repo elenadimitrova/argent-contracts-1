@@ -49,7 +49,6 @@ const deploy = async (network) => {
   // Deploy the GuardianManager module
   const GuardianManagerWrapper = await deployer.deploy(
     GuardianManager,
-    {},
     config.contracts.ModuleRegistry,
     GuardianStorageWrapper.address,
     config.settings.securityPeriod || 0,
@@ -58,7 +57,6 @@ const deploy = async (network) => {
   // Deploy the LockManager module
   const LockManagerWrapper = await deployer.deploy(
     LockManager,
-    {},
     config.contracts.ModuleRegistry,
     GuardianStorageWrapper.address,
     config.settings.lockPeriod || 0,
@@ -66,7 +64,6 @@ const deploy = async (network) => {
   // Deploy the RecoveryManager module
   const RecoveryManagerWrapper = await deployer.deploy(
     RecoveryManager,
-    {},
     config.contracts.ModuleRegistry,
     GuardianStorageWrapper.address,
     config.settings.recoveryPeriod || 0,
@@ -77,14 +74,12 @@ const deploy = async (network) => {
   // Deploy the ApprovedTransfer module
   const ApprovedTransferWrapper = await deployer.deploy(
     ApprovedTransfer,
-    {},
     config.contracts.ModuleRegistry,
     GuardianStorageWrapper.address,
   );
   // Deploy the TransferManager module
   const TransferManagerWrapper = await deployer.deploy(
     TransferManager,
-    {},
     config.contracts.ModuleRegistry,
     TransferStorageWrapper.address,
     GuardianStorageWrapper.address,
@@ -97,7 +92,6 @@ const deploy = async (network) => {
   // Deploy the TokenExchanger module
   const TokenExchangerWrapper = await deployer.deploy(
     TokenExchanger,
-    {},
     config.contracts.ModuleRegistry,
     GuardianStorageWrapper.address,
     config.Kyber ? config.Kyber.contract : "0x0000000000000000000000000000000000000000",
@@ -107,7 +101,6 @@ const deploy = async (network) => {
   // Deploy the NFTTransfer module
   const NftTransferWrapper = await deployer.deploy(
     NftTransfer,
-    {},
     config.contracts.ModuleRegistry,
     GuardianStorageWrapper.address,
     config.CryptoKitties.contract,
@@ -115,7 +108,6 @@ const deploy = async (network) => {
   // Deploy the CompoundManager module
   const CompoundManagerWrapper = await deployer.deploy(
     CompoundManager,
-    {},
     config.contracts.ModuleRegistry,
     GuardianStorageWrapper.address,
     config.defi.compound.comptroller,
@@ -124,7 +116,6 @@ const deploy = async (network) => {
   // Deploy MakerManagerV2
   const MakerV2ManagerWrapper = await deployer.deploy(
     MakerV2Manager,
-    {},
     config.contracts.ModuleRegistry,
     GuardianStorageWrapper.address,
     config.defi.maker.migration,

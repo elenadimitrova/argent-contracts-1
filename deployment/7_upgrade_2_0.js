@@ -79,7 +79,7 @@ const deploy = async (network) => {
   // Deploy the Base Wallet Library
   const BaseWalletWrapper = await deployer.deploy(BaseWallet);
   // Deploy the Wallet Factory
-  const WalletFactoryWrapper = await deployer.deploy(WalletFactory, {},
+  const WalletFactoryWrapper = await deployer.deploy(WalletFactory,
     ModuleRegistryWrapper.address, BaseWalletWrapper.address, ENSManagerWrapper.address, config.modules.GuardianStorage);
   // Deploy the new LimitStorage
   const LimitStorageWrapper = await deployer.deploy(LimitStorage);
@@ -91,7 +91,6 @@ const deploy = async (network) => {
   // //////////////////////////////////
   const ApprovedTransferWrapper = await deployer.deploy(
     ApprovedTransfer,
-    {},
     config.contracts.ModuleRegistry,
     config.modules.GuardianStorage,
     LimitStorageWrapper.address,
@@ -101,7 +100,6 @@ const deploy = async (network) => {
 
   const CompoundManagerWrapper = await deployer.deploy(
     CompoundManager,
-    {},
     config.contracts.ModuleRegistry,
     config.modules.GuardianStorage,
     config.defi.compound.comptroller,
@@ -111,7 +109,6 @@ const deploy = async (network) => {
 
   const GuardianManagerWrapper = await deployer.deploy(
     GuardianManager,
-    {},
     config.contracts.ModuleRegistry,
     config.modules.GuardianStorage,
     config.settings.securityPeriod || 0,
@@ -121,7 +118,6 @@ const deploy = async (network) => {
 
   const LockManagerWrapper = await deployer.deploy(
     LockManager,
-    {},
     config.contracts.ModuleRegistry,
     config.modules.GuardianStorage,
     config.settings.lockPeriod || 0,
@@ -130,7 +126,6 @@ const deploy = async (network) => {
 
   const NftTransferWrapper = await deployer.deploy(
     NftTransfer,
-    {},
     config.contracts.ModuleRegistry,
     config.modules.GuardianStorage,
     config.CryptoKitties.contract,
@@ -139,7 +134,6 @@ const deploy = async (network) => {
 
   const RecoveryManagerWrapper = await deployer.deploy(
     RecoveryManager,
-    {},
     config.contracts.ModuleRegistry,
     config.modules.GuardianStorage,
     config.settings.recoveryPeriod || 0,
@@ -149,7 +143,6 @@ const deploy = async (network) => {
 
   const TokenExchangerWrapper = await deployer.deploy(
     TokenExchanger,
-    {},
     config.contracts.ModuleRegistry,
     config.modules.GuardianStorage,
     config.defi.paraswap.contract,
@@ -160,7 +153,6 @@ const deploy = async (network) => {
 
   const MakerV2ManagerWrapper = await deployer.deploy(
     MakerV2Manager,
-    {},
     config.contracts.ModuleRegistry,
     config.modules.GuardianStorage,
     config.defi.maker.migration,
@@ -173,7 +165,6 @@ const deploy = async (network) => {
 
   const TransferManagerWrapper = await deployer.deploy(
     TransferManager,
-    {},
     config.contracts.ModuleRegistry,
     config.modules.TransferStorage,
     config.modules.GuardianStorage,
@@ -189,7 +180,6 @@ const deploy = async (network) => {
 
   const RelayerModuleWrapper = await deployer.deploy(
     RelayerModule,
-    {},
     config.contracts.ModuleRegistry,
     config.modules.GuardianStorage,
     LimitStorageWrapper.address,
@@ -311,7 +301,6 @@ const deploy = async (network) => {
 
     const UpgraderWrapper = await deployer.deploy(
       Upgrader,
-      {},
       config.contracts.ModuleRegistry,
       toRemove.map((module) => module.address),
       toAdd.map((module) => module.address),

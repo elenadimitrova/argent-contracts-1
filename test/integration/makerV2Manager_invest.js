@@ -55,10 +55,8 @@ describe("Test MakerV2 DSR", () => {
 
     const migration = await ScdMcdMigration.at(config.defi.maker.migration);
     const vat = await migration.vat();
-    const makerRegistry = await deployer.deploy(MakerRegistry, {}, vat);
-    makerV2 = await deployer.deploy(
-      MakerV2Manager,
-      {},
+    const makerRegistry = await MakerRegistry.new(vat);
+    makerV2 = await MakerV2Manager.new(
       config.contracts.ModuleRegistry,
       config.modules.GuardianStorage,
       config.defi.maker.migration,
@@ -95,7 +93,7 @@ describe("Test MakerV2 DSR", () => {
       await (await migration.swapDaiToSai(convertedToSai)).wait();
     }
 
-    wallet = await deployer.deploy(Wallet);
+    wallet = await Wallet.new();
     await (await wallet.init(owner.address, [makerV2.address])).wait();
     walletAddress = wallet.address;
   });

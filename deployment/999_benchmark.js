@@ -145,7 +145,7 @@ class Benchmark {
       this.MakerV2ManagerWrapper.address,
     ];
 
-    const proxy = await this.deployer.deploy(Proxy, {}, this.BaseWalletWrapper.address);
+    const proxy = await Proxy.new(this.BaseWalletWrapper.address);
     this.wallet = this.deployer.wrapDeployedContract(BaseWallet, proxy.address);
     this.walletAddress = this.wallet.address;
     await this.wallet.init(this.accounts[0], this.allModules);

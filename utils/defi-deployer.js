@@ -38,13 +38,14 @@ module.exports = {
   ETH_PER_DAI,
 
   deployUniswap: async (deployer, manager, infrastructure, tokens = [], ethPerToken = [], ethLiquidity = parseEther("10")) => {
-    const uniswapFactory = await deployer.deploy(UniswapFactory);
-    const uniswapTemplateExchange = await deployer.deploy(UniswapExchange);
+    const uniswapFactory = await UniswapFactory.new();
+    const uniswapTemplateExchange = await UniswapExchange.new();
     await uniswapFactory.initializeFactory(uniswapTemplateExchange.address);
     for (let i = 0; i < tokens.length; i += 1) {
       const token = tokens[i];
       await uniswapFactory.from(infrastructure).createExchange(token.address);
-      const tokenExchange = await etherlime.ContractAt(UniswapExchange, await uniswapFactory.getExchange(token.address));
+      const uniswapExchangeAddress = await uniswapFactory.getExchange(token.address);
+      const tokenExchange = await UniswapExchange.at(uniswapExchangeAddress);
       const tokenLiquidity = ethLiquidity.mul(WAD).div(ethPerToken[i]);
       await token["mint(address,uint256)"](infrastructure.address, tokenLiquidity);
       await token.from(infrastructure).approve(tokenExchange.address, tokenLiquidity);
@@ -58,16 +59,16 @@ module.exports = {
     //
     // Deploy and setup SCD
     //
-    const sai = await deployer.deploy(DSToken, {}, formatBytes32String("SAI"));
-    const dai = await deployer.deploy(Dai, {}, 42);
-    const gov = await deployer.deploy(DSToken, {}, formatBytes32String("MKR"));
-    const weth = await deployer.deploy(WETH);
-    const vox = await deployer.deploy(Vox, {}, USD_PER_DAI);
-    const sin = await deployer.deploy(DSToken, {}, formatBytes32String("SIN"));
-    const skr = await deployer.deploy(DSToken, {}, formatBytes32String("PETH"));
-    const pip = await deployer.deploy(DSValue);
-    const pep = await deployer.deploy(DSValue);
-    const tub = await deployer.deploy(Tub, {},
+    const sai = await DSToken.new(formatBytes32String("SAI"));
+    const dai = await Dai.new(42);
+    const gov = await DSToken.new(formatBytes32String("MKR"));
+    const weth = await WETH.new();
+    const vox = await Vox.new(USD_PER_DAI);
+    const sin = await DSToken.new(formatBytes32String("SIN"));
+    const skr = await DSToken.new(formatBytes32String("PETH"));
+    const pip = await DSValue.new();
+    const pep = await DSValue.new();
+    const tub = await Tub.new(
       sai.address,
       sin.address,
       skr.address,
@@ -96,18 +97,18 @@ module.exports = {
     //
 
     // Vat setup
-    const vat = await deployer.deploy(Vat);
+    const vat = await Vat.new();
     // Setting the debt ceiling
     await vat["file(bytes32,uint256)"](formatBytes32String("Line"), "138000000000000000000000000000000000000000000000000000");
 
-    const cdpManager = await deployer.deploy(CdpManager, {}, vat.address);
+    const cdpManager = await CdpManager.new(vat.address);
 
     // Pot setup
-    const pot = await deployer.deploy(Pot, {}, vat.address);
+    const pot = await Pot.new(vat.address);
     await vat.rely(pot.address);
 
     // Jug setup
-    const jug = await deployer.deploy(Jug, {}, vat.address);
+    const jug = await Jug.new(vat.address);
     await vat.rely(jug.address);
 
     // SAI collateral setup
@@ -117,7 +118,7 @@ module.exports = {
     await vat.file(saiIlk, formatBytes32String("spot"), "100000000000000000000000000000000000000000000000000");
     await vat.file(saiIlk, formatBytes32String("line"), "100000000000000000000000000000000000000000000000000000");
     await vat.file(saiIlk, formatBytes32String("dust"), "0");
-    const saiJoin = await deployer.deploy(GemJoin, {}, vat.address, saiIlk, sai.address);
+    const saiJoin = await GemJoin.new(vat.address, saiIlk, sai.address);
     await vat.rely(saiJoin.address);
 
     // WETH collateral setup
@@ -127,31 +128,29 @@ module.exports = {
     await vat.file(wethIlk, formatBytes32String("spot"), "88050000000000000000000000000");
     await vat.file(wethIlk, formatBytes32String("line"), "50000000000000000000000000000000000000000000000000000");
     await vat.file(wethIlk, formatBytes32String("dust"), "20000000000000000000000000000000000000000000000");
-    const wethJoin = await deployer.deploy(GemJoin, {}, vat.address, wethIlk, weth.address);
+    const wethJoin = await GemJoin.new(vat.address, wethIlk, weth.address);
     await vat.rely(wethJoin.address);
 
     // BAT collateral setup
-    const bat = await deployer.deploy(DSToken, {}, formatBytes32String("BAT"));
+    const bat = await DSToken.new(formatBytes32String("BAT"));
     const batIlk = formatBytes32String("BAT-A");
     await jug.init(batIlk);
     await vat.init(batIlk);
     await vat.file(batIlk, formatBytes32String("spot"), "88050000000000000000000000000");
     await vat.file(batIlk, formatBytes32String("line"), "50000000000000000000000000000000000000000000000000000");
     await vat.file(batIlk, formatBytes32String("dust"), "20000000000000000000000000000000000000000000000");
-    const batJoin = await deployer.deploy(GemJoin, {}, vat.address, batIlk, bat.address);
+    const batJoin = await GemJoin.new(vat.address, batIlk, bat.address);
     await vat.rely(batJoin.address);
 
     // DAI debt setup
-    const daiJoin = await deployer.deploy(DaiJoin, {}, vat.address, dai.address);
+    const daiJoin = await DaiJoin.new(vat.address, dai.address);
     // Allow daiJoin to mint DAI
     await dai.rely(daiJoin.address);
     // Give daiJoin some internal DAI in the vat
     await vat.suck(daiJoin.address, daiJoin.address, RAD.mul(1000000));
 
     // Deploy and setup SCD to MCD Migration
-    const migration = await deployer.deploy(
-      ScdMcdMigration,
-      {},
+    const migration = await ScdMcdMigration.new(
       tub.address,
       cdpManager.address,
       saiJoin.address,

@@ -458,9 +458,7 @@ describe("Test MakerV2 Vaults", () => {
 
     async function topupWalletToken(token, amount) {
       while ((await token.balanceOf(owner)).lt(amount)) {
-        await deployer.deploy(
-          FaucetUser,
-          {},
+        await FaucetUser.new(
           config.defi.maker.batFaucet,
           token.address,
         );
@@ -588,9 +586,7 @@ describe("Test MakerV2 Vaults", () => {
         collateralAmount = testAmounts.collateralAmount;
 
         // Deploy the upgraded MakerV2 module
-        upgradedMakerV2 = await deployer.deploy(
-          UpgradedMakerV2Manager,
-          {},
+        upgradedMakerV2 = await UpgradedMakerV2Manager.new(
           config.contracts.ModuleRegistry,
           config.modules.GuardianStorage,
           config.defi.maker.migration,
