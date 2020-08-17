@@ -142,8 +142,16 @@ module.exports = {
     return timestamp;
   },
 
+  async getNetworkId() {
+    const networkId = await web3.eth.net.getId();
+    return networkId;
+  },
+
   async increaseTime(seconds) {
-    if (this.network === "ganache") {
+    const networkId = await getNetworkId();
+    console.log("networkId", networkId)
+    // TODO
+    if (networkId === "ganache") {
       await web3.currentProvider.send("evm_increaseTime", seconds);
       await web3.currentProvider.send("evm_mine");
     } else {
