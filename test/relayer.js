@@ -21,7 +21,7 @@ const RecoveryManager = artifacts.require("RecoveryManager"); // non-owner only 
 const ERC20 = artifacts.require("TestERC20");
 
 const TestManager = require("../utils/test-manager");
-const { ETH_TOKEN } = require("../utils/utilities.js");
+const { ETH_TOKEN, getNonceForRelay } = require("../utils/utilities.js");
 
 const MODULE_NOT_AUTHORISED_FOR_WALLET = "RM: module not authorised";
 const INVALID_DATA_REVERT_MSG = "RM: Invalid dataWallet";
@@ -34,8 +34,6 @@ const WRONG_NUMBER_SIGNATURES = "RM: Wrong number of signatures";
 contract("RelayerModule", (accounts) => {
   const manager = new TestManager();
   const { deployer } = manager;
-  let { getNonceForRelay } = manager;
-  getNonceForRelay = getNonceForRelay.bind(manager);
 
   const infrastructure = accounts[0];
   const owner = accounts[1];
