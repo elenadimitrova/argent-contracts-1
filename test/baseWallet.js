@@ -173,7 +173,7 @@ contract("BaseWallet", (accounts) => {
         // removing module 1
         const upgrader = await SimpleUpgrader.new(registry.address, [module1.address], []);
         await registry.registerModule(upgrader.address, ethers.utils.formatBytes32String("Removing module1"));
-        await module1.from(owner).addModule(wallet.address, upgrader.address);
+        await module1.addModule(wallet.address, upgrader.address, { from: owner });
         module1IsAuthorised = await wallet.authorised(module1.address);
         assert.equal(module1IsAuthorised, false, "module1 should not be authorised");
 

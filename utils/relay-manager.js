@@ -44,7 +44,7 @@ class RelayManager {
       );
       return gasUsed;
     }
-    const tx = await this.relayerModule.from(_relayer).execute(
+    const tx = await this.relayerModule.execute(
       _wallet.address,
       _module.address,
       methodData,
@@ -54,7 +54,7 @@ class RelayManager {
       _gasLimit,
       _refundToken,
       _refundAddress,
-      { gasLimit: _gasLimitRelay, gasPrice: _gasPrice },
+      { gasLimit: _gasLimitRelay, gasPrice: _gasPrice, from: _relayer },
     );
     const txReceipt = await _module.verboseWaitForTransaction(tx);
     return txReceipt;

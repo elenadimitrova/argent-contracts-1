@@ -274,7 +274,7 @@ contract("TokenExchanger", (accounts) => {
       const { success } = (await parseLogs(txR, relayerModule, "TransactionExecuted"))[0];
       assert.isTrue(success, "Relayed tx should succeed");
     } else {
-      txR = await (await exchanger.from(owner)[method](...params, { gasLimit: 2000000 })).wait();
+      txR = await (await exchanger[method](...params, { gasLimit: 2000000, from: owner })).wait();
     }
     const { destAmount } = (await parseLogs(txR, exchanger, "TokenExchanged"))[0];
 
@@ -344,7 +344,7 @@ contract("TokenExchanger", (accounts) => {
         fixedAmount,
         variableAmount,
       });
-      await assert.revertWith(exchangerExcludingAllExchanges.from(owner)[method](...params, { gasLimit: 2000000 }), "TE: Unauthorised Exchange");
+      await assert.revertWith(exchangerExcludingAllExchanges[method](...params, { gasLimit: 2000000, from: owner }), "TE: Unauthorised Exchange");
     });
 
     it(`lets old wallets call ${method} successfully`, async () => {
@@ -367,7 +367,7 @@ contract("TokenExchanger", (accounts) => {
 
     const testTradeWithPreExistingAllowance = async (allowance) => {
       const spender = await paraswap.getTokenTransferProxy();
-      await transferManager.from(owner).approveToken(wallet.address, tokenA.address, spender, allowance);
+      await transferManager.approveToken(wallet.address, tokenA.address, spender, allowance, { from: owner });
       // call sell
       await testTrade({
         method, fromToken: tokenA.address, toToken: ETH_TOKEN, relayed: false,

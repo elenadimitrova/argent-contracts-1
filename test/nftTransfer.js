@@ -85,8 +85,8 @@ contract("NftTransfer", (accounts) => {
           assert.equal(error, expectedError);
         }
       } else {
-        const txPromise = nftModule.from(owner1)
-          .transferNFT(wallet1.address, nftContract.address, recipientAddress, nftId, safe, ZERO_BYTES32);
+        const txPromise = nftModule
+          .transferNFT(wallet1.address, nftContract.address, recipientAddress, nftId, safe, ZERO_BYTES32, { from: owner1 });
         if (shouldSucceed) {
           await txPromise;
         } else {
@@ -171,11 +171,12 @@ contract("NftTransfer", (accounts) => {
     describe("Protecting from transferFrom hijacking", () => {
       beforeEach(async () => {
         erc20 = await ERC20.new([wallet1.address], 1000, 18);
-        await erc20Approver.from(owner1).approveERC20(
+        await erc20Approver.approveERC20(
           wallet1.address,
           erc20.address,
           wallet1.address, // spender
           100,
+          { from: owner1 }
         ); // amount
       });
 

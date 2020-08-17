@@ -84,7 +84,7 @@ contract("RecoveryManager", (accounts) => {
     });
 
     for (const address of guardianAddresses) {
-      await guardianManager.from(owner).addGuardian(wallet.address, address);
+      await guardianManager.addGuardian(wallet.address, address, { from: owner });
     }
 
     await increaseTime(30);
@@ -446,7 +446,7 @@ contract("RecoveryManager", (accounts) => {
           ethers.constants.AddressZero,
         );
         await assert.revertWith(
-          relayerModule.from(nonowner2).execute(
+          relayerModule.execute(
             wallet.address,
             recoveryManager.address,
             methodData,
@@ -456,7 +456,7 @@ contract("RecoveryManager", (accounts) => {
             700000,
             ETH_TOKEN,
             ethers.constants.AddressZero,
-            { gasLimit: 800000 },
+            { gasLimit: 800000, from: nonowner2 },
           ),
           "RM: unknown method",
         );

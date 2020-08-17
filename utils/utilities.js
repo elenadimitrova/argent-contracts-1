@@ -153,8 +153,8 @@ module.exports = {
   },
 
   async increaseTime(seconds) {
-    const networkId = await getNetworkId();
-    console.log("networkId", networkId)
+    const networkId = await this.getNetworkId();
+    console.log("networkId", networkId);
     // TODO
     if (networkId === "ganache") {
       await web3.currentProvider.send("evm_increaseTime", seconds);

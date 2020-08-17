@@ -245,7 +245,7 @@ class Benchmark {
     await this.GuardianManagerWrapper.addGuardian(this.walletAddress, guardian);
 
     // estimate lock wallet
-    const gasUsed = await this.LockManagerWrapper.from(guardian).estimate.lock(this.walletAddress);
+    const gasUsed = await this.LockManagerWrapper.estimate.lock(this.walletAddress, { from: guardian });
     this._logger.addItem("Lock wallet (direct)", gasUsed);
   }
 
@@ -255,10 +255,10 @@ class Benchmark {
     await this.GuardianManagerWrapper.addGuardian(this.walletAddress, guardian);
 
     // lock wallet
-    await this.LockManagerWrapper.from(guardian).lock(this.walletAddress);
+    await this.LockManagerWrapper.lock(this.walletAddress, { from: guardian });
 
     // estimate unlock wallet
-    const gasUsed = await this.LockManagerWrapper.from(guardian).estimate.unlock(this.walletAddress);
+    const gasUsed = await this.LockManagerWrapper.estimate.unlock(this.walletAddress, { from: guardian });
     this._logger.addItem("Unlock wallet (direct)", gasUsed);
   }
 

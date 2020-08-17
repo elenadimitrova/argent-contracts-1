@@ -298,7 +298,7 @@ contract("RelayerModule", (accounts) => {
       assert.isTrue(dailySpent.toNumber() === 10, "initial daily spent should be 10");
       const rBalanceStart = await getBalance(recipient);
       // add a guardian
-      await guardianManager.from(owner).addGuardian(wallet.address, guardian);
+      await guardianManager.addGuardian(wallet.address, guardian, { from: owner });
       // call approvedTransfer
       const params = [wallet.address, ETH_TOKEN, recipient, 1000, ethers.constants.HashZero];
       const nonce = await getNonceForRelay();
@@ -351,7 +351,7 @@ contract("RelayerModule", (accounts) => {
 
     it("should succeed when called directly on OnlyOwnerModule modules", async () => {
       await registry.registerModule(testModuleNew.address, formatBytes32String("testModuleNew"));
-      await testOnlyOwnerModule.from(owner).addModule(wallet.address, testModuleNew.address);
+      await testOnlyOwnerModule.addModule(wallet.address, testModuleNew.address, { from: owner });
 
       const isModuleAuthorised = await wallet.authorised(testModuleNew.address);
       assert.isTrue(isModuleAuthorised);
@@ -371,13 +371,13 @@ contract("RelayerModule", (accounts) => {
 
     it("should succeed when called directly on non-OnlyOwnerModule modules", async () => {
       await registry.registerModule(testModuleNew.address, formatBytes32String("testModuleNew"));
-      await approvedTransfer.from(owner).addModule(wallet.address, testModuleNew.address);
+      await approvedTransfer.addModule(wallet.address, testModuleNew.address, { from: owner });
       const isModuleAuthorised = await wallet.authorised(testModuleNew.address);
       assert.isTrue(isModuleAuthorised);
     });
 
     it("should fail to add module which is not registered", async () => {
-      await assert.revertWith(approvedTransfer.from(owner).addModule(wallet.address, testModuleNew.address),
+      await assert.revertWith(approvedTransfer.addModule(wallet.address, testModuleNew.address, { from: owner }),
         "BM: module is not registered");
     });
   });

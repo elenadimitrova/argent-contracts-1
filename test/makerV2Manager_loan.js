@@ -165,7 +165,7 @@ contract("MakerV2Loan", (accounts) => {
       const { success } = (await parseLogs(txReceipt, relayerModule, "TransactionExecuted"))[0];
       assert.isTrue(success, "Relayed tx should succeed");
     } else {
-      txReceipt = await (await makerV2.from(owner)[method](...params, { gasLimit: 2000000 })).wait();
+      txReceipt = await (await makerV2[method](...params, { gasLimit: 2000000, from: owner })).wait();
     }
     const loanId = (await parseLogs(txReceipt, makerV2, "LoanOpened"))[0]._loanId;
     assert.isDefined(loanId, "Loan ID should be defined");
@@ -214,26 +214,26 @@ contract("MakerV2Loan", (accounts) => {
 
     it("should open>close>reopen a Loan (blockchain tx)", async () => {
       const loanId = await testOpenLoan({ collateralAmount, daiAmount, relayed: false });
-      await makerV2.from(owner).closeLoan(walletAddress, loanId, { gasLimit: 4500000 });
+      await makerV2.closeLoan(walletAddress, loanId, { gasLimit: 4500000, from: owner });
       await testOpenLoan({ collateralAmount, daiAmount, relayed: false });
     });
 
     it("should open>close>reopen a Loan (relayed tx)", async () => {
       const loanId = await testOpenLoan({ collateralAmount, daiAmount, relayed: true });
-      await (await makerV2.from(owner).closeLoan(walletAddress, loanId, { gasLimit: 4500000 })).wait();
+      await (await makerV2.closeLoan(walletAddress, loanId, { gasLimit: 4500000, from: owner })).wait();
       await testOpenLoan({ collateralAmount, daiAmount, relayed: true });
     });
 
     it("should not open a loan for the wrong debt token", async () => {
       await assert.revertWith(
-        makerV2.from(owner).openLoan(walletAddress, ETH_TOKEN, collateralAmount, sai.address, daiAmount),
+        makerV2.openLoan(walletAddress, ETH_TOKEN, collateralAmount, sai.address, daiAmount, { from: owner }),
         "MV2: debt token not DAI",
       );
     });
 
     it("should not open a loan for an unsupported collateral token", async () => {
       await assert.revertWith(
-        makerV2.from(owner).openLoan(walletAddress, sai.address, collateralAmount, dai.address, daiAmount),
+        makerV2.openLoan(walletAddress, sai.address, collateralAmount, dai.address, daiAmount, { from: owner }),
         "MV2: unsupported collateral",
       );
     });
@@ -252,7 +252,7 @@ contract("MakerV2Loan", (accounts) => {
       const txR = await manager.relay(makerV2Manager, method, params, wallet, [owner]);
       assert.isTrue(txR.events.find((e) => e.event === "TransactionExecuted").args.success, "Relayed tx should succeed");
     } else {
-      await makerV2Manager.from(owner)[method](...params, { gasLimit: 2000000 });
+      await makerV2Manager[method](...params, { gasLimit: 2000000, from: owner });
     }
 
     const afterCollateral = (collateral.address === ETH_TOKEN)
@@ -298,7 +298,7 @@ contract("MakerV2Loan", (accounts) => {
 
       await wallet2.init(owner2, [makerV2.address]);
       await assert.revertWith(
-        makerV2.from(owner2).addCollateral(wallet2.address, loanId, ETH_TOKEN, parseEther("0.010")),
+        makerV2.addCollateral(wallet2.address, loanId, ETH_TOKEN, parseEther("0.010"), { from: owner2 }),
         "MV2: unauthorized loanId",
       );
     });
@@ -320,7 +320,7 @@ contract("MakerV2Loan", (accounts) => {
     it("should not remove collateral with invalid collateral amount", async () => {
       const loanId = await testOpenLoan({ collateralAmount, daiAmount, relayed: false });
       await assert.revertWith(
-        makerV2.from(owner).removeCollateral(walletAddress, loanId, ETH_TOKEN, ethers.BigNumber.from(2).pow(255)),
+        makerV2.removeCollateral(walletAddress, loanId, ETH_TOKEN, ethers.BigNumber.from(2).pow(255), { from: owner }),
         "MV2: int overflow",
       );
     });
@@ -332,7 +332,7 @@ contract("MakerV2Loan", (accounts) => {
 
       await wallet2.init(owner2, [makerV2.address]);
       await assert.revertWith(
-        makerV2.from(owner2).removeCollateral(wallet2.address, loanId, ETH_TOKEN, parseEther("0.010")),
+        makerV2.removeCollateral(wallet2.address, loanId, ETH_TOKEN, parseEther("0.010"), { from: owner2 }),
         "MV2: unauthorized loanId",
       );
     });
@@ -349,7 +349,7 @@ contract("MakerV2Loan", (accounts) => {
       const txR = await manager.relay(makerV2, method, params, { contractAddress: walletAddress }, [owner]);
       assert.isTrue(txR.events.find((e) => e.event === "TransactionExecuted").args.success, "Relayed tx should succeed");
     } else {
-      await makerV2.from(owner)[method](...params, { gasLimit: 2000000 });
+      await makerV2[method](...params, { gasLimit: 2000000, from: owner });
     }
     const afterDAI = await dai.balanceOf(wallet.address);
     const afterETH = await getBalance(wallet.address);
@@ -398,7 +398,7 @@ contract("MakerV2Loan", (accounts) => {
 
       await wallet2.init(owner2, [makerV2.address]);
       await assert.revertWith(
-        makerV2.from(owner2).addDebt(wallet2.address, loanId, ETH_TOKEN, parseEther("0.010")),
+        makerV2.addDebt(wallet2.address, loanId, ETH_TOKEN, parseEther("0.010"), { from: owner2 }),
         "MV2: unauthorized loanId",
       );
     });
@@ -411,7 +411,7 @@ contract("MakerV2Loan", (accounts) => {
     const loanId = await testOpenLoan({ collateralAmount, daiAmount, relayed });
     if (!useDai) {
       // move the borrowed DAI from the wallet to the owner
-      await transferManager.from(owner).transferToken(walletAddress, dai.address, owner, daiAmount, HashZero, { gasLimit: 3000000 });
+      await transferManager.transferToken(walletAddress, dai.address, owner, daiAmount, HashZero, { gasLimit: 3000000, from: owner });
       // give some ETH to the wallet to be used for repayment
       await wallet.send(collateralAmount);
     }
@@ -450,7 +450,7 @@ contract("MakerV2Loan", (accounts) => {
       const { collateralAmount, daiAmount } = await getTestAmounts(ETH_TOKEN);
       const loanId = await testOpenLoan({ collateralAmount, daiAmount, relayed: false });
       await assert.revertWith(
-        makerV2.from(owner).removeDebt(walletAddress, loanId, dai.address, daiAmount.sub(1)),
+        makerV2.removeDebt(walletAddress, loanId, dai.address, daiAmount.sub(1), { from: owner }),
         "MV2: repay less or full",
       );
     });
@@ -463,7 +463,7 @@ contract("MakerV2Loan", (accounts) => {
 
       await wallet2.init(owner2, [makerV2.address]);
       await assert.revertWith(
-        makerV2.from(owner2).removeDebt(wallet2.address, loanId, ETH_TOKEN, parseEther("0.010")),
+        makerV2.removeDebt(wallet2.address, loanId, ETH_TOKEN, parseEther("0.010"), { from: owner2 }),
         "MV2: unauthorized loanId",
       );
     });
@@ -476,7 +476,7 @@ contract("MakerV2Loan", (accounts) => {
     await wallet.send(collateralAmount.mul(2));
     if (!useDai) {
       // move the borrowed DAI from the wallet to the owner
-      await transferManager.from(owner).transferToken(walletAddress, dai.address, owner, daiAmount, HashZero, { gasLimit: 3000000 });
+      await transferManager.transferToken(walletAddress, dai.address, owner, daiAmount, HashZero, { gasLimit: 3000000, from: owner });
     }
     await increaseTime(3); // wait 3 seconds
     const beforeDAI = await dai.balanceOf(wallet.address);
@@ -487,7 +487,7 @@ contract("MakerV2Loan", (accounts) => {
       const txR = await manager.relay(makerV2, method, params, { contractAddress: walletAddress }, [owner]);
       assert.isTrue(txR.events.find((e) => e.event === "TransactionExecuted").args.success, "Relayed tx should succeed");
     } else {
-      await makerV2.from(owner)[method](...params, { gasLimit: 3000000 });
+      await makerV2[method](...params, { gasLimit: 3000000, from: owner });
     }
     const afterDAI = await dai.balanceOf(wallet.address);
     const afterETH = await getBalance(wallet.address);
@@ -521,7 +521,7 @@ contract("MakerV2Loan", (accounts) => {
 
       await wallet2.init(owner2, [makerV2.address]);
       await assert.revertWith(
-        makerV2.from(owner2).closeLoan(wallet2.address, loanId),
+        makerV2.closeLoan(wallet2.address, loanId, { from: owner2 }),
         "MV2: unauthorized loanId",
       );
     });
@@ -574,10 +574,10 @@ contract("MakerV2Loan", (accounts) => {
     async function testAcquireVault({ relayed }) {
       // Create the vault with `owner` as owner
       const { ilk } = await makerRegistry.collaterals(weth.address);
-      let txR = await (await cdpManager.from(owner).open(ilk, owner)).wait();
+      let txR = await (await cdpManager.open(ilk, owner, { from: owner })).wait();
       const vaultId = txR.events.find((e) => e.event === "NewCdp").args.cdp;
       // Transfer the vault to the wallet
-      await cdpManager.from(owner).give(vaultId, walletAddress);
+      await cdpManager.give(vaultId, walletAddress, { from: owner });
       // Transfer the vault to the module
       const loanId = bigNumToBytes32(vaultId);
       const method = "acquireLoan";
@@ -586,7 +586,7 @@ contract("MakerV2Loan", (accounts) => {
         txR = await manager.relay(makerV2, method, params, { contractAddress: walletAddress }, [owner]);
         assert.isTrue(txR.events.find((e) => e.event === "TransactionExecuted").args.success, "Relayed tx should succeed");
       } else {
-        await makerV2.from(owner)[method](...params, { gasLimit: 1000000 });
+        await makerV2[method](...params, { gasLimit: 1000000, from: owner });
       }
       // The loanId held by the MakerV2Manager will be different from the transferred vault id, in case the latter was merged into an existing vault
       const moduleLoanId = await makerV2.loanIds(walletAddress, ilk);
@@ -611,12 +611,12 @@ contract("MakerV2Loan", (accounts) => {
     it("should not transfer a vault that is not owned by the wallet", async () => {
       // Create the vault with `owner` as owner
       const { ilk } = await makerRegistry.collaterals(weth.address);
-      const txR = await (await cdpManager.from(owner).open(ilk, owner)).wait();
+      const txR = await (await cdpManager.open(ilk, owner, { from: owner })).wait();
       const vaultId = txR.events.find((e) => e.event === "NewCdp").args.cdp;
       const loanId = bigNumToBytes32(vaultId);
       // We are NOT transferring the vault from the owner to the wallet
       await assert.revertWith(
-        makerV2.from(owner).acquireLoan(walletAddress, loanId), "MV2: wrong vault owner",
+        makerV2.acquireLoan(walletAddress, loanId, { from: owner }), "MV2: wrong vault owner",
       );
     });
 
@@ -626,13 +626,13 @@ contract("MakerV2Loan", (accounts) => {
       await fakeWallet.init(owner, [makerV2.address]);
       // Create the vault with `owner` as owner
       const { ilk } = await makerRegistry.collaterals(weth.address);
-      const txR = await (await cdpManager.from(owner).open(ilk, owner)).wait();
+      const txR = await (await cdpManager.open(ilk, owner, { from: owner })).wait();
       const vaultId = txR.events.find((e) => e.event === "NewCdp").args.cdp;
       const loanId = bigNumToBytes32(vaultId);
       // Transfer the vault to the fake wallet
-      await cdpManager.from(owner).give(vaultId, fakeWallet.address);
+      await cdpManager.give(vaultId, fakeWallet.address, { from: owner });
       await assert.revertWith(
-        makerV2.from(owner).acquireLoan(fakeWallet.address, loanId), "MV2: failed give",
+        makerV2.acquireLoan(fakeWallet.address, loanId, { from: owner }), "MV2: failed give",
       );
     });
 
@@ -655,13 +655,13 @@ contract("MakerV2Loan", (accounts) => {
       await fakeWallet.init(owner, [makerV2.address]);
       // Create the vault with `owner` as owner
       const { ilk } = await makerRegistry.collaterals(weth.address);
-      const txR = await (await cdpManager.from(owner).open(ilk, owner)).wait();
+      const txR = await (await cdpManager.open(ilk, owner, { from: owner })).wait();
       const vaultId = txR.events.find((e) => e.event === "NewCdp").args.cdp;
       const loanId = bigNumToBytes32(vaultId);
       // Transfer the vault to the fake wallet
-      await cdpManager.from(owner).give(vaultId, fakeWallet.address);
+      await cdpManager.give(vaultId, fakeWallet.address, { from: owner });
       await assert.revertWith(
-        makerV2.from(owner).acquireLoan(fakeWallet.address, loanId), "MV2: reentrant call",
+        makerV2.acquireLoan(fakeWallet.address, loanId, { from: owner }), "MV2: reentrant call",
       );
     });
   });
@@ -673,7 +673,7 @@ contract("MakerV2Loan", (accounts) => {
       // Opening SCD CDP
       const { daiAmount, collateralAmount } = await getTestAmounts(ETH_TOKEN);
       const params = [walletAddress, ETH_TOKEN, collateralAmount, sai.address, daiAmount];
-      const txReceipt = await (await makerV1.from(owner).openLoan(...params, { gasLimit: 2000000 })).wait();
+      const txReceipt = await (await makerV1.openLoan(...params, { gasLimit: 2000000, from: owner })).wait();
       oldCdpId = (await parseLogs(txReceipt, makerV1, "LoanOpened"))[0]._loanId;
       assert.isDefined(oldCdpId, "The old CDP ID should be defined");
     });
@@ -687,7 +687,7 @@ contract("MakerV2Loan", (accounts) => {
         const { success } = (await parseLogs(txReceipt, relayerModule, "TransactionExecuted"))[0];
         assert.isTrue(success, "Relayed tx should succeed");
       } else {
-        txReceipt = await (await makerV2.from(owner)[method](...params, { gasLimit: 2000000 })).wait();
+        txReceipt = await (await makerV2[method](...params, { gasLimit: 2000000, from: owner })).wait();
       }
       const loanId = (await parseLogs(txReceipt, makerV2, "CdpMigrated"))[0]._newVaultId;
       assert.isDefined(loanId, "The new vault ID should be defined");
@@ -777,7 +777,7 @@ contract("MakerV2Loan", (accounts) => {
         const txR = await manager.relay(makerV2, method, params, wallet, [owner]);
         assert.isTrue(txR.events.find((e) => e.event === "TransactionExecuted").args.success, "Relayed tx should succeed");
       } else {
-        await makerV2.from(owner)[method](...params, { gasLimit: 2000000 });
+        await makerV2[method](...params, { gasLimit: 2000000, from: owner });
       }
 
       // Make sure that the vaults can be manipulated from the upgraded module
@@ -788,7 +788,7 @@ contract("MakerV2Loan", (accounts) => {
         relayed,
         makerV2Manager: upgradedMakerV2,
       });
-      await upgradedMakerV2.from(owner).closeLoan(walletAddress, loanId1, { gasLimit: 4500000 });
+      await upgradedMakerV2.closeLoan(walletAddress, loanId1, { gasLimit: 4500000, from: owner });
 
       if (withBatVault) {
         await testChangeCollateral({
@@ -799,7 +799,7 @@ contract("MakerV2Loan", (accounts) => {
           collateral: bat,
           makerV2Manager: upgradedMakerV2,
         });
-        await upgradedMakerV2.from(owner).closeLoan(walletAddress, loanId2, { gasLimit: 4500000 });
+        await upgradedMakerV2.closeLoan(walletAddress, loanId2, { gasLimit: 4500000, from: owner });
       }
     }
 
@@ -820,7 +820,7 @@ contract("MakerV2Loan", (accounts) => {
     });
 
     it("should not allow non-module to give vault", async () => {
-      await assert.revertWith(makerV2.from(owner).giveVault(walletAddress, formatBytes32String("")), "BM: must be a wallet module");
+      await assert.revertWith(makerV2.giveVault(walletAddress, formatBytes32String(""), { from: owner }), "BM: must be a wallet module");
     });
 
     it("should not allow (fake) module to give unowned vault", async () => {
@@ -828,10 +828,10 @@ contract("MakerV2Loan", (accounts) => {
       const badModule = await BadModule.new(registry.address, guardianStorage.address, false, 0);
       await registry.registerModule(badModule.address, formatBytes32String("BadModule"));
       // Add the bad module to the wallet
-      await makerV2.from(owner).addModule(walletAddress, badModule.address, { gasLimit: 2000000 });
+      await makerV2.addModule(walletAddress, badModule.address, { gasLimit: 2000000, from: owner });
       // Use the bad module to attempt a bad giveVault call
       const callData = makerV2.contract.interface.functions.giveVault.encode([walletAddress, bigNumToBytes32(ethers.BigNumber.from(666))]);
-      await assert.revertWith(badModule.from(owner).callContract(makerV2.address, 0, callData), "MV2: unauthorized loanId");
+      await assert.revertWith(badModule.callContract(makerV2.address, 0, callData, { from: owner }), "MV2: unauthorized loanId");
     });
   });
 });
