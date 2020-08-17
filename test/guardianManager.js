@@ -10,11 +10,11 @@ const Registry = artifacts.require("ModuleRegistry");
 const DumbContract = artifacts.require("TestContract");
 const NonCompliantGuardian = artifacts.require("NonCompliantGuardian");
 
-const TestManager = require("../utils/test-manager");
+const RelayManager = require("../utils/relay-manager");
 const { increaseTime } = require("../utils/utilities.js");
 
 contract("GuardianManager", (accounts) => {
-  const manager = new TestManager(accounts);
+  const manager = new RelayManager(accounts);
 
   const owner = accounts[1];
   const guardian1 = accounts[2];

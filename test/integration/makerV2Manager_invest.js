@@ -8,7 +8,7 @@
 
 /* global artifacts */
 const { parseEther } = require("ethers").utils;
-const TestManager = require("../../utils/test-manager");
+const RelayManager = require("../../utils/relay-manager");
 const DeployManager = require("../../utils/deploy-manager.js");
 const UniswapFactory = require("../../lib/uniswap/UniswapFactory");
 const UniswapExchange = require("../../lib/uniswap/UniswapExchange");
@@ -49,7 +49,7 @@ describe("Test MakerV2 DSR", () => {
     await deployManager.setup();
     const { configurator } = deployManager;
     deployer = deployManager.deployer;
-    testManager = new TestManager([...Array(10)].map(() => deployer), network, deployer);
+    testManager = new RelayManager([...Array(10)].map(() => deployer), network, deployer);
     owner = deployer.signer;
     const { config } = configurator;
 

@@ -18,12 +18,12 @@ const Registry = artifacts.require("ModuleRegistry");
 const RecoveryManager = artifacts.require("RecoveryManager");
 
 const RelayerModule = artifacts.require("RelayerModule");
-const TestManager = require("../utils/test-manager");
+const RelayManager = require("../utils/relay-manager");
 
 const IS_ONLY_OWNER_MODULE = keccak256(toUtf8Bytes("isOnlyOwnerModule()")).slice(0, 10);
 
 contract("SimpleUpgrader", (accounts) => {
-  const manager = new TestManager();
+  const manager = new RelayManager();
 
   const owner = accounts[1];
   let registry;

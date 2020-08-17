@@ -1,7 +1,7 @@
 /* global artifacts */
 
 const ethers = require("ethers");
-const { bigNumToBytes32, ETH_TOKEN, parseLogs, increaseTime } = require("../utils/utilities.js");
+const { bigNumToBytes32, ETH_TOKEN, parseLogs, increaseTime, getBalance } = require("../utils/utilities.js");
 const {
   deployMaker, deployUniswap, RAY, ETH_PER_DAI, ETH_PER_MKR,
 } = require("../utils/defi-deployer");
@@ -9,7 +9,7 @@ const {
 const { parseEther, formatBytes32String } = ethers.utils;
 const { HashZero, AddressZero } = ethers.constants;
 
-const TestManager = require("../utils/test-manager");
+const RelayManager = require("../utils/relay-manager");
 
 const GemJoin = artifacts.require("GemJoin");
 const Registry = artifacts.require("ModuleRegistry");
@@ -30,7 +30,7 @@ const BadModule = artifacts.require("TestModule");
 const RelayerModule = artifacts.require("RelayerModule");
 
 contract("MakerV2Loan", (accounts) => {
-  const manager = new TestManager();
+  const manager = new RelayManager();
   const { deployer } = manager;
 
   const infrastructure = accounts[0];
@@ -151,7 +151,7 @@ contract("MakerV2Loan", (accounts) => {
     collateralAmount, daiAmount, relayed, collateral = { contractAddress: ETH_TOKEN },
   }) {
     const beforeCollateral = (collateral.address === ETH_TOKEN)
-      ? await deployer.provider.getBalance(walletAddress)
+      ? await getBalance(walletAddress)
       : await collateral.balanceOf(walletAddress);
 
     const beforeDAI = await dai.balanceOf(walletAddress);
@@ -171,7 +171,7 @@ contract("MakerV2Loan", (accounts) => {
     assert.isDefined(loanId, "Loan ID should be defined");
 
     const afterCollateral = (collateral.address === ETH_TOKEN)
-      ? await deployer.provider.getBalance(walletAddress)
+      ? await getBalance(walletAddress)
       : await collateral.balanceOf(walletAddress);
     const afterDAI = await dai.balanceOf(walletAddress);
     const afterDAISupply = await dai.totalSupply();
@@ -243,7 +243,7 @@ contract("MakerV2Loan", (accounts) => {
     loanId, collateralAmount, add, relayed, collateral = { contractAddress: ETH_TOKEN }, makerV2Manager = makerV2,
   }) {
     const beforeCollateral = (collateral.address === ETH_TOKEN)
-      ? await deployer.provider.getBalance(walletAddress)
+      ? await getBalance(walletAddress)
       : await collateral.balanceOf(walletAddress);
 
     const method = add ? "addCollateral" : "removeCollateral";
@@ -256,7 +256,7 @@ contract("MakerV2Loan", (accounts) => {
     }
 
     const afterCollateral = (collateral.address === ETH_TOKEN)
-      ? await deployer.provider.getBalance(walletAddress)
+      ? await getBalance(walletAddress)
       : await collateral.balanceOf(walletAddress);
 
     const expectedCollateralChange = collateralAmount.mul(add ? -1 : 1).toString();
@@ -342,7 +342,7 @@ contract("MakerV2Loan", (accounts) => {
     loanId, daiAmount, add, relayed,
   }) {
     const beforeDAI = await dai.balanceOf(wallet.address);
-    const beforeETH = await deployer.provider.getBalance(wallet.address);
+    const beforeETH = await getBalance(wallet.address);
     const method = add ? "addDebt" : "removeDebt";
     const params = [wallet.address, loanId, dai.address, daiAmount];
     if (relayed) {
@@ -352,7 +352,7 @@ contract("MakerV2Loan", (accounts) => {
       await makerV2.from(owner)[method](...params, { gasLimit: 2000000 });
     }
     const afterDAI = await dai.balanceOf(wallet.address);
-    const afterETH = await deployer.provider.getBalance(wallet.address);
+    const afterETH = await getBalance(wallet.address);
     if (add) {
       assert.equal(
         afterDAI.sub(beforeDAI).toString(),
@@ -417,13 +417,13 @@ contract("MakerV2Loan", (accounts) => {
     }
     await increaseTime(3); // wait 3 seconds
     const beforeDAI = await dai.balanceOf(wallet.address);
-    const beforeETH = await deployer.provider.getBalance(wallet.address);
+    const beforeETH = await getBalance(wallet.address);
     await testChangeDebt({
       loanId, daiAmount: parseEther("0.2"), add: false, relayed,
     });
 
     const afterDAI = await dai.balanceOf(wallet.address);
-    const afterETH = await deployer.provider.getBalance(wallet.address);
+    const afterETH = await getBalance(wallet.address);
 
     if (useDai) assert.isTrue(afterDAI.lt(beforeDAI) && afterETH.eq(beforeETH), "should have less DAI");
     else assert.isTrue(afterDAI.eq(beforeDAI) && afterETH.lt(beforeETH), "should have less ETH");
@@ -480,7 +480,7 @@ contract("MakerV2Loan", (accounts) => {
     }
     await increaseTime(3); // wait 3 seconds
     const beforeDAI = await dai.balanceOf(wallet.address);
-    const beforeETH = await deployer.provider.getBalance(wallet.address);
+    const beforeETH = await getBalance(wallet.address);
     const method = "closeLoan";
     const params = [wallet.address, loanId];
     if (relayed) {
@@ -490,7 +490,7 @@ contract("MakerV2Loan", (accounts) => {
       await makerV2.from(owner)[method](...params, { gasLimit: 3000000 });
     }
     const afterDAI = await dai.balanceOf(wallet.address);
-    const afterETH = await deployer.provider.getBalance(wallet.address);
+    const afterETH = await getBalance(wallet.address);
 
     if (useDai) assert.isTrue(afterDAI.lt(beforeDAI) && afterETH.sub(collateralAmount).lt(beforeETH), "should have spent some DAI and some ETH");
     else assert.isTrue(afterDAI.eq(beforeDAI) && afterETH.sub(collateralAmount).lt(beforeETH), "should have spent some ETH");

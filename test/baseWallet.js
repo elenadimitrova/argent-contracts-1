@@ -11,15 +11,12 @@ const Registry = artifacts.require("ModuleRegistry");
 const SimpleUpgrader = artifacts.require("SimpleUpgrader");
 const GuardianStorage = artifacts.require("GuardianStorage");
 
-const TestManager = require("../utils/test-manager");
+const { getBalance } = require("../utils/utilities.js");
 
 contract("BaseWallet", (accounts) => {
-  const manager = new TestManager();
-
   const owner = accounts[1];
   const nonowner = accounts[2];
 
-  let deployer;
   let wallet;
   let walletImplementation;
   let registry;
@@ -29,7 +26,6 @@ contract("BaseWallet", (accounts) => {
   let guardianStorage;
 
   before(async () => {
-    deployer = manager.newDeployer();
     registry = await Registry.new();
     guardianStorage = await GuardianStorage.new();
     module1 = await TestModule.new(registry.address, guardianStorage.address, true, 42);
@@ -119,16 +115,16 @@ contract("BaseWallet", (accounts) => {
 
     describe("Receiving ETH", () => {
       it("should accept ETH", async () => {
-        const before = await deployer.provider.getBalance(wallet.address);
+        const before = await getBalance(wallet.address);
         await wallet.send(50000000);
-        const after = await deployer.provider.getBalance(wallet.address);
+        const after = await getBalance(wallet.address);
         assert.equal(after.sub(before).toNumber(), 50000000, "should have received ETH");
       });
 
       it("should accept ETH with data", async () => {
-        const before = await deployer.provider.getBalance(wallet.address);
+        const before = await getBalance(wallet.address);
         await wallet.send(50000000, { data: 0x1234 });
-        const after = await deployer.provider.getBalance(wallet.address);
+        const after = await getBalance(wallet.address);
         assert.equal(after.sub(before).toNumber(), 50000000, "should have received ETH");
       });
     });

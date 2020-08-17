@@ -136,6 +136,11 @@ module.exports = {
     );
   },
 
+  async getBalance(account) {
+    const balance = await web3.eth.getBalance(account);
+    return balance;
+  },
+
   async getTimestamp(blockNumber) {
     const blockN = !blockNumber ? "latest" : blockNumber;
     const { timestamp } = await web3.eth.getBlock(blockN);

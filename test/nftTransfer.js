@@ -15,11 +15,11 @@ const ERC20Approver = artifacts.require("ERC20Approver");
 
 const ZERO_BYTES32 = ethers.constants.HashZero;
 
-const TestManager = require("../utils/test-manager");
+const RelayManager = require("../utils/relay-manager");
 const { parseRelayReceipt } = require("../utils/utilities.js");
 
 contract("NftTransfer", (accounts) => {
-  const manager = new TestManager();
+  const manager = new RelayManager();
 
   const owner1 = accounts[1];
   const owner2 = accounts[2];

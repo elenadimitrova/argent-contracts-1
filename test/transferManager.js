@@ -35,10 +35,10 @@ const ZERO_BYTES32 = ethers.constants.HashZero;
 
 const ACTION_TRANSFER = 0;
 
-const TestManager = require("../utils/test-manager");
+const RelayManager = require("../utils/relay-manager");
 
 contract("TransferManager", (accounts) => {
-  const manager = new TestManager();
+  const manager = new RelayManager();
 
   const infrastructure = accounts[0];
   const owner = accounts[1];
@@ -46,7 +46,6 @@ contract("TransferManager", (accounts) => {
   const recipient = accounts[3];
   const spender = accounts[4];
 
-  let deployer;
   let registry;
   let priceProvider;
   let transferStorage;
@@ -62,7 +61,6 @@ contract("TransferManager", (accounts) => {
   let relayerModule;
 
   before(async () => {
-    deployer = manager.newDeployer();
     weth = await WETH.new();
     registry = await Registry.new();
     priceProvider = await LegacyTokenPriceProvider.new(ethers.constants.AddressZero);
@@ -378,7 +376,7 @@ contract("TransferManager", (accounts) => {
       token, to, amount, delay, relayed = false,
     }) {
       const tokenAddress = token === ETH_TOKEN ? ETH_TOKEN : token.address;
-      const fundsBefore = (token === ETH_TOKEN ? await deployer.provider.getBalance(to.address) : await token.balanceOf(to.address));
+      const fundsBefore = (token === ETH_TOKEN ? await utils.getBalance(to.address) : await token.balanceOf(to.address));
       const params = [wallet.address, tokenAddress, to.address, amount, ZERO_BYTES32];
       let txReceipt; let
         tx;
@@ -389,7 +387,7 @@ contract("TransferManager", (accounts) => {
         txReceipt = await transferModule.verboseWaitForTransaction(tx);
       }
       assert.isTrue(await utils.hasEvent(txReceipt, transferModule, "PendingTransferCreated"), "should have generated PendingTransferCreated event");
-      let fundsAfter = (token === ETH_TOKEN ? await deployer.provider.getBalance(to.address) : await token.balanceOf(to.address));
+      let fundsAfter = (token === ETH_TOKEN ? await utils.getBalance(to.address) : await token.balanceOf(to.address));
       assert.equal(fundsAfter.sub(fundsBefore).toNumber(), 0, "should not have transfered amount");
       if (delay === 0) {
         const id = ethers.utils.solidityKeccak256(["uint8", "address", "address", "uint256", "bytes", "uint256"],
@@ -402,7 +400,7 @@ contract("TransferManager", (accounts) => {
       txReceipt = await transferModule.verboseWaitForTransaction(tx);
       assert.isTrue(await utils.hasEvent(txReceipt, transferModule, "PendingTransferExecuted"),
         "should have generated PendingTransferExecuted event");
-      fundsAfter = (token === ETH_TOKEN ? await deployer.provider.getBalance(to.address) : await token.balanceOf(to.address));
+      fundsAfter = (token === ETH_TOKEN ? await utils.getBalance(to.address) : await token.balanceOf(to.address));
       return assert.equal(fundsAfter.sub(fundsBefore).toNumber(), amount, "should have transfered amount");
     }
 

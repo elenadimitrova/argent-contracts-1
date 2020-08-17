@@ -1,7 +1,7 @@
 /* global artifacts */
 const ethers = require("ethers");
 
-const TestManager = require("../utils/test-manager");
+const { getBalance } = require("../utils/utilities.js");
 
 const Proxy = artifacts.require("Proxy");
 const BaseWallet = artifacts.require("BaseWallet");
@@ -11,7 +11,6 @@ const Registry = artifacts.require("ModuleRegistry");
 contract("Proxy", (accounts) => {
   const owner = accounts[1];
 
-  let deployer;
   let walletImplementation;
   let wallet;
   let proxy;
@@ -20,8 +19,6 @@ contract("Proxy", (accounts) => {
   let module3;
 
   before(async () => {
-    const manager = new TestManager();
-    deployer = manager.newDeployer();
     const registry = await Registry.new();
     walletImplementation = await BaseWallet.new();
     module1 = await Module.new(registry.address, ethers.constants.AddressZero);
@@ -53,9 +50,9 @@ contract("Proxy", (accounts) => {
   });
 
   it("should accept ETH", async () => {
-    const before = await deployer.provider.getBalance(wallet.address);
+    const before = await getBalance(wallet.address);
     await wallet.send(50000000);
-    const after = await deployer.provider.getBalance(wallet.address);
+    const after = await getBalance(wallet.address);
     assert.equal(after.sub(before).toNumber(), 50000000, "should have received ETH");
   });
 });

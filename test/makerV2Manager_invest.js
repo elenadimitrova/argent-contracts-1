@@ -4,7 +4,7 @@ const ethers = require("ethers");
 const {
   deployMaker, deployUniswap, WAD, ETH_PER_DAI, ETH_PER_MKR,
 } = require("../utils/defi-deployer");
-const TestManager = require("../utils/test-manager");
+const RelayManager = require("../utils/relay-manager");
 
 const Registry = artifacts.require("ModuleRegistry");
 const MakerV2Manager = artifacts.require("MakerV2Manager");
@@ -17,7 +17,7 @@ const RelayerModule = artifacts.require("RelayerModule");
 const DAI_SENT = WAD.div(100000000);
 
 contract("MakerV2Invest", (accounts) => {
-  const manager = new TestManager();
+  const manager = new RelayManager();
   const { deployer } = manager;
 
   const infrastructure = accounts[0];

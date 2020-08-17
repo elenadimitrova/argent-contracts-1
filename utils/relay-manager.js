@@ -1,7 +1,7 @@
 const ethers = require("ethers");
 const { signOffchain, ETH_TOKEN, getNonceForRelay } = require("./utilities.js");
 
-class TestManager {
+class RelayManager {
   setRelayerModule(relayerModule) {
     this.relayerModule = relayerModule;
   }
@@ -61,4 +61,4 @@ class TestManager {
   }
 }
 
-module.exports = TestManager;
+module.exports = RelayManager;
