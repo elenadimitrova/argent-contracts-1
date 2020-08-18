@@ -420,16 +420,17 @@ contract("WalletFactory", (accounts) => {
       const salt = utils.generateSaltValue();
       const label = `wallet${index}`;
       const modules = [module1.address, module2.address];
-      const amount = ethers.BigNumber.from("10000000000000");
+      const amount = 10000000000000;
       // we get the future address
       const futureAddr = await factory.getAddressForCounterfactualWallet(owner, modules, guardian, salt);
       // We send ETH to the address
-      await futureAddr.send(amount);
+      await web3.eth.sendTransaction({ from: accounts[0], to: futureAddr, value: amount });
       // we create the wallet
       const tx = await factory.createCounterfactualWallet(owner, modules, label, guardian, salt);
-      const txReceipt = await factory.verboseWaitForTransaction(tx);
+      const txReceipt = tx.receipt;
+
       const wallet = await BaseWallet.at(futureAddr);
-      assert.isTrue(await utils.hasEvent(txReceipt, wallet, "Received"), "should have generated Received event");
+      await utils.hasEvent(txReceipt, "Received");
       const log = await utils.parseLogs(txReceipt, wallet, "Received");
       assert.equal(log[0].value.toNumber(), amount, "should log the correct amount");
       assert.equal(log[0].sender, "0x0000000000000000000000000000000000000000", "sender should be address(0)");

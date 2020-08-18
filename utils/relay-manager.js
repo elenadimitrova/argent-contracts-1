@@ -57,8 +57,7 @@ class RelayManager {
       _refundAddress,
       { gasLimit: _gasLimitRelay, gasPrice: _gasPrice, from: relayerAccount },
     );
-    const txReceipt = await _module.verboseWaitForTransaction(tx);
-    return txReceipt;
+    return tx.receipt;
   }
 }
 

@@ -301,8 +301,7 @@ contract("TransferManager", (accounts) => {
 
     it("should correctly set the pending limit", async () => {
       const tx = await transferModule.changeLimit(wallet.address, 4000000, { from: owner });
-      const txReceipt = await transferModule.verboseWaitForTransaction(tx);
-      const timestamp = await manager.getTimestamp(txReceipt.block);
+      const timestamp = await manager.getTimestamp(tx.receipt.block);
       const { _pendingLimit, _changeAfter } = await transferModule.getPendingLimit(wallet.address);
       assert.equal(_pendingLimit.toNumber(), 4000000);
       assert.closeTo(_changeAfter.toNumber(), timestamp + SECURITY_PERIOD, 1); // timestamp is sometimes off by 1
@@ -329,8 +328,7 @@ contract("TransferManager", (accounts) => {
       await wallet.send(ethers.BigNumber.from(ETH_LIMIT));
       // Transfer 100 wei
       const tx = await transferModule.transferToken(wallet.address, ETH_TOKEN, recipient, 100, ZERO_BYTES32, { from: owner });
-      const txReceipt = await transferModule.verboseWaitForTransaction(tx);
-      const timestamp = await manager.getTimestamp(txReceipt.block);
+      const timestamp = await manager.getTimestamp(tx.receipt.block);
       // Then transfer 200 wei more
       await transferModule.transferToken(wallet.address, ETH_TOKEN, recipient, 200, ZERO_BYTES32, { from: owner });
 
@@ -361,7 +359,7 @@ contract("TransferManager", (accounts) => {
         const tx = await transferModule.transferToken(...params, { from: signer });
         txReceipt = await transferModule.verboseWaitForTransaction(tx);
       }
-      assert.isTrue(await utils.hasEvent(txReceipt, transferModule, "Transfer"), "should have generated Transfer event");
+      await utils.hasEvent(txReceipt, "Transfer");
       const fundsAfter = (token === ETH_TOKEN ? await to.getBalance() : await token.balanceOf(to.address));
       const unspentAfter = await transferModule.getDailyUnspent(wallet.address);
       assert.equal(fundsAfter.sub(fundsBefore).toNumber(), amount, "should have transfered amount");
@@ -386,7 +384,7 @@ contract("TransferManager", (accounts) => {
         tx = await transferModule.transferToken(...params, { from: owner });
         txReceipt = await transferModule.verboseWaitForTransaction(tx);
       }
-      assert.isTrue(await utils.hasEvent(txReceipt, transferModule, "PendingTransferCreated"), "should have generated PendingTransferCreated event");
+      await utils.hasEvent(txReceipt, "PendingTransferCreated");
       let fundsAfter = (token === ETH_TOKEN ? await utils.getBalance(to.address) : await token.balanceOf(to.address));
       assert.equal(fundsAfter.sub(fundsBefore).toNumber(), 0, "should not have transfered amount");
       if (delay === 0) {
@@ -398,8 +396,7 @@ contract("TransferManager", (accounts) => {
       tx = await transferModule.executePendingTransfer(wallet.address,
         tokenAddress, recipient, amount, ZERO_BYTES32, txReceipt.blockNumber);
       txReceipt = await transferModule.verboseWaitForTransaction(tx);
-      assert.isTrue(await utils.hasEvent(txReceipt, transferModule, "PendingTransferExecuted"),
-        "should have generated PendingTransferExecuted event");
+      await utils.hasEvent(txReceipt, "PendingTransferExecuted");
       fundsAfter = (token === ETH_TOKEN ? await utils.getBalance(to.address) : await token.balanceOf(to.address));
       return assert.equal(fundsAfter.sub(fundsBefore).toNumber(), amount, "should have transfered amount");
     }
@@ -526,8 +523,7 @@ contract("TransferManager", (accounts) => {
         await increaseTime(1);
         const tx = await transferModule.cancelPendingTransfer(wallet.address, id, { from: owner });
         const txReceipt = await transferModule.verboseWaitForTransaction(tx);
-        assert.isTrue(await utils.hasEvent(txReceipt, transferModule, "PendingTransferCanceled"),
-          "should have generated PendingTransferCanceled event");
+        await utils.hasEvent(txReceipt, "PendingTransferCanceled");
         const executeAfter = await transferModule.getPendingTransfer(wallet.address, id);
         assert.equal(executeAfter, 0, "should have cancelled the pending transfer");
       });
@@ -539,8 +535,7 @@ contract("TransferManager", (accounts) => {
         await increaseTime(1);
         const tx = await transferModule.cancelPendingTransfer(wallet.address, id, { from: owner });
         const txReceipt = await transferModule.verboseWaitForTransaction(tx);
-        assert.isTrue(await utils.hasEvent(txReceipt, transferModule, "PendingTransferCanceled"),
-          "should have generated PendingTransferCanceled event");
+        await utils.hasEvent(txReceipt, "PendingTransferCanceled");
         const executeAfter = await transferModule.getPendingTransfer(wallet.address, id);
         assert.equal(executeAfter, 0, "should have cancelled the pending transfer");
       });
@@ -568,9 +563,9 @@ contract("TransferManager", (accounts) => {
         txReceipt = await manager.relay(transferModule, "approveToken", params, wallet, [signer]);
       } else {
         const tx = await transferModule.approveToken(...params, { from: signer });
-        txReceipt = await transferModule.verboseWaitForTransaction(tx);
+        txReceipt = tx.receipt;
       }
-      assert.isTrue(await utils.hasEvent(txReceipt, transferModule, "Approved"), "should have generated Approved event");
+      await utils.hasEvent(txReceipt, "Approved");
       const unspentAfter = await transferModule.getDailyUnspent(wallet.address);
 
       const amountInEth = await getEtherValue(amount, erc20.address);
@@ -639,9 +634,9 @@ contract("TransferManager", (accounts) => {
         txReceipt = await manager.relay(transferModule, "callContract", params, wallet, [owner]);
       } else {
         const tx = await transferModule.callContract(...params, { from: owner });
-        txReceipt = await transferModule.verboseWaitForTransaction(tx);
+        txReceipt = tx.receipt;
       }
-      assert.isTrue(await utils.hasEvent(txReceipt, transferModule, "CalledContract"), "should have generated CalledContract event");
+      await utils.hasEvent(txReceipt, "CalledContract");
       const unspentAfter = await transferModule.getDailyUnspent(wallet.address);
       if (value < ETH_LIMIT) {
         assert.equal(unspentBefore[0].sub(unspentAfter[0]).toNumber(), value, "should have updated the daily limit");
@@ -719,9 +714,9 @@ contract("TransferManager", (accounts) => {
         txReceipt = await manager.relay(transferModule, method, params, wallet, [signer]);
       } else {
         const tx = await transferModule[method](...params, { from: signer });
-        txReceipt = await transferModule.verboseWaitForTransaction(tx);
+        txReceipt = tx.receipt;
       }
-      assert.isTrue(await utils.hasEvent(txReceipt, transferModule, "ApprovedAndCalledContract"), "should have generated CalledContract event");
+      await utils.hasEvent(txReceipt, "ApprovedAndCalledContract");
       const unspentAfter = await transferModule.getDailyUnspent(wallet.address);
       const amountInEth = wrapEth ? amount : await getEtherValue(amount, erc20.address);
 
