@@ -447,7 +447,7 @@ class Benchmark {
   // ///////////////////
 
   async relay(target, method, params, wallet, signers, estimate = false) {
-    const result = await this.testManager.relay(target, method, params, wallet, signers, this.accounts[9], estimate);
+    const result = await this.testManager.relay(target, method, params, wallet, signers, accounts[9], estimate);
     return result;
   }
 
