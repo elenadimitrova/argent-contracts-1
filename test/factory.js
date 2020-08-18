@@ -89,7 +89,7 @@ contract("WalletFactory", (accounts) => {
 
   describe("Create and configure the factory", () => {
     it("should not allow to be created with empty ModuleRegistry", async () => {
-      await assert.revertWith(Factory.new(
+      await utils.assertRevert(Factory.new(
         ZERO_ADDRESS,
         implementation.address,
         ensManager.address,
@@ -98,7 +98,7 @@ contract("WalletFactory", (accounts) => {
     });
 
     it("should not allow to be created with empty WalletImplementation", async () => {
-      await assert.revertWith(Factory.new(
+      await utils.assertRevert(Factory.new(
         moduleRegistry.address,
         ZERO_ADDRESS,
         ensManager.address,
@@ -107,7 +107,7 @@ contract("WalletFactory", (accounts) => {
     });
 
     it("should not allow to be created with empty ENSManager", async () => {
-      await assert.revertWith(Factory.new(
+      await utils.assertRevert(Factory.new(
         moduleRegistry.address,
         implementation.address,
         ZERO_ADDRESS,
@@ -116,7 +116,7 @@ contract("WalletFactory", (accounts) => {
     });
 
     it("should not allow to be created with empty GuardianStorage", async () => {
-      await assert.revertWith(Factory.new(
+      await utils.assertRevert(Factory.new(
         moduleRegistry.address,
         implementation.address,
         ensManager.address,
@@ -132,12 +132,12 @@ contract("WalletFactory", (accounts) => {
     });
 
     it("should not allow owner to change the module registry to zero address", async () => {
-      await assert.revertWith(factory.changeModuleRegistry(ethers.constants.AddressZero), "WF: address cannot be null");
+      await utils.assertRevert(factory.changeModuleRegistry(ethers.constants.AddressZero), "WF: address cannot be null");
     });
 
     it("should not allow non-owner to change the module registry", async () => {
       const randomAddress = utils.getRandomAddress();
-      await assert.revertWith(factory.changeModuleRegistry(randomAddress, { from: other }), "Must be owner");
+      await utils.assertRevert(factory.changeModuleRegistry(randomAddress, { from: other }), "Must be owner");
     });
 
     it("should allow owner to change the ens manager", async () => {
@@ -148,12 +148,12 @@ contract("WalletFactory", (accounts) => {
     });
 
     it("should not allow owner to change the ens manager to a zero address", async () => {
-      await assert.revertWith(factory.changeENSManager(ethers.constants.AddressZero), "WF: address cannot be null");
+      await utils.assertRevert(factory.changeENSManager(ethers.constants.AddressZero), "WF: address cannot be null");
     });
 
     it("should not allow non-owner to change the ens manager", async () => {
       const randomAddress = utils.getRandomAddress();
-      await assert.revertWith(factory.changeENSManager(randomAddress, { from: owner }), "Must be owner");
+      await utils.assertRevert(factory.changeENSManager(randomAddress, { from: owner }), "Must be owner");
     });
 
     it("should return the correct ENSManager", async () => {
@@ -231,14 +231,14 @@ contract("WalletFactory", (accounts) => {
       // we create the wallet
       const label = `wallet${index}`;
       const modules = [module1.address];
-      await assert.revertWith(factory.createWallet(owner, modules, label, ZERO_ADDRESS),
+      await utils.assertRevert(factory.createWallet(owner, modules, label, ZERO_ADDRESS),
         "WF: guardian cannot be null");
     });
 
     it("should fail to create when there are no modules", async () => {
       const label = `wallet${index}`;
       const modules = [];
-      await assert.revertWith(factory.createWallet(owner, modules, label, guardian),
+      await utils.assertRevert(factory.createWallet(owner, modules, label, guardian),
         "WF: cannot assign with less than 1 module");
     });
 
@@ -246,21 +246,21 @@ contract("WalletFactory", (accounts) => {
       const label = `wallet${index}`;
       const modules = [module1.address, module2.address];
       await factory.createWallet(owner, modules, label, guardian);
-      await assert.revertWith(factory.createWallet(owner, modules, label, guardian),
+      await utils.assertRevert(factory.createWallet(owner, modules, label, guardian),
         "AEM: _label is alrealdy owned");
     });
 
     it("should fail to create with zero address as owner", async () => {
       const label = `wallet${index}`;
       const modules = [module1.address];
-      await assert.revertWith(factory.createWallet(ethers.constants.AddressZero, modules, label, guardian),
+      await utils.assertRevert(factory.createWallet(ethers.constants.AddressZero, modules, label, guardian),
         "WF: owner cannot be null");
     });
 
     it("should fail to create with no modules", async () => {
       const label = `wallet${index}`;
       const modules = [];
-      await assert.revertWith(factory.createWallet(owner, modules, label, guardian),
+      await utils.assertRevert(factory.createWallet(owner, modules, label, guardian),
         "WF: cannot assign with less than 1 module");
     });
 
@@ -268,7 +268,7 @@ contract("WalletFactory", (accounts) => {
       const label = `wallet${index}`;
       const randomAddress = utils.getRandomAddress();
       const modules = [randomAddress];
-      await assert.revertWith(factory.createWallet(owner, modules, label, guardian),
+      await utils.assertRevert(factory.createWallet(owner, modules, label, guardian),
         "WF: one or more modules are not registered");
     });
   });
@@ -404,7 +404,7 @@ contract("WalletFactory", (accounts) => {
       const salt = utils.generateSaltValue();
       const label = `wallet${index}`;
       const modules = [];
-      await assert.revertWith(factory.createCounterfactualWallet(owner, modules, label, guardian, salt),
+      await utils.assertRevert(factory.createCounterfactualWallet(owner, modules, label, guardian, salt),
         "WF: cannot assign with less than 1 module");
     });
 
@@ -412,7 +412,7 @@ contract("WalletFactory", (accounts) => {
       const salt = utils.generateSaltValue();
       const label = `wallet${index}`;
       const modules = [module1.address, module2.address];
-      await assert.revertWith(factory.createCounterfactualWallet(owner, modules, label, ZERO_ADDRESS, salt),
+      await utils.assertRevert(factory.createCounterfactualWallet(owner, modules, label, ZERO_ADDRESS, salt),
         "WF: guardian cannot be null");
     });
 
@@ -438,7 +438,7 @@ contract("WalletFactory", (accounts) => {
     it("should fail to get an address when the guardian is empty", async () => {
       const salt = utils.generateSaltValue();
       const modules = [module1.address, module2.address];
-      await assert.revertWith(factory.getAddressForCounterfactualWallet(owner, modules, ZERO_ADDRESS, salt),
+      await utils.assertRevert(factory.getAddressForCounterfactualWallet(owner, modules, ZERO_ADDRESS, salt),
         "WF: guardian cannot be null");
     });
   });

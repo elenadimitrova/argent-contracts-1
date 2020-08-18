@@ -18,7 +18,8 @@ const {
   signOffchain,
   getTimestamp,
   increaseTime,
-  getNonceForRelay
+  getNonceForRelay,
+  assertRevert
 } = require("../utils/utilities.js");
 
 const WRONG_SIGNATURE_NUMBER_REVERT_MSG = "RM: Wrong number of signatures";
@@ -123,7 +124,7 @@ contract("RecoveryManager", (accounts) => {
 
     it("should not let owner execute the recovery procedure", async () => {
       const expectedRevertMsg = guardians.length >= 3 ? WRONG_SIGNATURE_NUMBER_REVERT_MSG : INVALID_SIGNATURES_REVERT_MSG;
-      await assert.revertWith(
+      await assertRevert(
         manager.relay(
           recoveryManager,
           "executeRecovery",
@@ -136,7 +137,7 @@ contract("RecoveryManager", (accounts) => {
 
     it("should not let a majority of guardians and owner execute the recovery procedure", async () => {
       const majority = guardians.slice(0, Math.ceil((guardians.length) / 2) - 1);
-      await assert.revertWith(
+      await assertRevert(
         manager.relay(
           recoveryManager,
           "executeRecovery",
@@ -152,7 +153,7 @@ contract("RecoveryManager", (accounts) => {
 
     it("should not let a minority of guardians execute the recovery procedure", async () => {
       const minority = guardians.slice(0, Math.ceil((guardians.length) / 2) - 1);
-      await assert.revertWith(
+      await assertRevert(
         manager.relay(
           recoveryManager,
           "executeRecovery",
@@ -226,7 +227,7 @@ contract("RecoveryManager", (accounts) => {
     });
 
     it("should not let 1 guardian cancel the recovery procedure", async () => {
-      await assert.revertWith(
+      await assertRevert(
         manager.relay(
           recoveryManager,
           "cancelRecovery",
@@ -241,7 +242,7 @@ contract("RecoveryManager", (accounts) => {
     });
 
     it("should not let the owner cancel the recovery procedure", async () => {
-      await assert.revertWith(
+      await assertRevert(
         manager.relay(
           recoveryManager,
           "cancelRecovery",
@@ -256,7 +257,7 @@ contract("RecoveryManager", (accounts) => {
     });
 
     it("should not allow duplicate guardian signatures", async () => {
-      await assert.revertWith(
+      await assertRevert(
         manager.relay(
           recoveryManager,
           "cancelRecovery",
@@ -271,7 +272,7 @@ contract("RecoveryManager", (accounts) => {
     });
 
     it("should not allow non guardians signatures", async () => {
-      await assert.revertWith(
+      await assertRevert(
         manager.relay(
           recoveryManager,
           "cancelRecovery",
@@ -298,7 +299,7 @@ contract("RecoveryManager", (accounts) => {
 
     it("should not let owner + minority of guardians execute an ownership transfer", async () => {
       const minority = guardians.slice(0, Math.ceil((guardians.length) / 2) - 1);
-      await assert.revertWith(
+      await assertRevert(
         manager.relay(
           recoveryManager,
           "transferOwnership",
@@ -314,7 +315,7 @@ contract("RecoveryManager", (accounts) => {
 
     it("should not let majority of guardians execute an ownership transfer without owner", async () => {
       const majority = guardians.slice(0, Math.ceil((guardians.length) / 2));
-      await assert.revertWith(
+      await assertRevert(
         manager.relay(
           recoveryManager,
           "transferOwnership",
@@ -331,7 +332,7 @@ contract("RecoveryManager", (accounts) => {
 
   describe("RecoveryManager high level logic", () => {
     it("should not be able to instantiate the RecoveryManager with lock period shorter than the recovery period", async () => {
-      await assert.revertWith(RecoveryManager.new(registry.address, guardianStorage.address, 36, 35),
+      await assertRevert(RecoveryManager.new(registry.address, guardianStorage.address, 36, 35),
         "RM: insecure security periods");
     });
   });
@@ -339,7 +340,7 @@ contract("RecoveryManager", (accounts) => {
   describe("Execute Recovery", () => {
     it("should not allow recovery to be executed with no guardians", async () => {
       const noGuardians = [];
-      await assert.revertWith(manager.relay(
+      await assertRevert(manager.relay(
         recoveryManager,
         "executeRecovery",
         [wallet.address, newowner],
@@ -371,7 +372,7 @@ contract("RecoveryManager", (accounts) => {
 
       it("should not allow duplicate guardian signatures", async () => {
         const badMajority = [guardian1, guardian1];
-        await assert.revertWith(
+        await assertRevert(
           manager.relay(
             recoveryManager,
             "executeRecovery",
@@ -445,7 +446,7 @@ contract("RecoveryManager", (accounts) => {
           ETH_TOKEN,
           ethers.constants.AddressZero,
         );
-        await assert.revertWith(
+        await assertRevert(
           relayerModule.execute(
             wallet.address,
             recoveryManager.address,
@@ -537,7 +538,7 @@ contract("RecoveryManager", (accounts) => {
 
     it("should not allow owner not signing", async () => {
       await addGuardians([guardian1]);
-      await assert.revertWith(
+      await assertRevert(
         manager.relay(
           recoveryManager,
           "transferOwnership",
@@ -550,7 +551,7 @@ contract("RecoveryManager", (accounts) => {
 
     it("should not allow duplicate owner signatures", async () => {
       await addGuardians([guardian1]);
-      await assert.revertWith(
+      await assertRevert(
         manager.relay(
           recoveryManager,
           "transferOwnership",
@@ -563,7 +564,7 @@ contract("RecoveryManager", (accounts) => {
 
     it("should not allow duplicate guardian signatures", async () => {
       await addGuardians([guardian1, guardian2, guardian3]);
-      await assert.revertWith(
+      await assertRevert(
         manager.relay(
           recoveryManager,
           "transferOwnership",
@@ -576,7 +577,7 @@ contract("RecoveryManager", (accounts) => {
 
     it("should not allow non guardian signatures", async () => {
       await addGuardians([guardian1]);
-      await assert.revertWith(
+      await assertRevert(
         manager.relay(
           recoveryManager,
           "transferOwnership",
