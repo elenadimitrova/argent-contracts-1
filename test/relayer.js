@@ -170,7 +170,7 @@ contract("RelayerModule", (accounts) => {
     it("should fail when relaying to itself", async () => {
       const dataMethod = "setIntOwnerOnly";
       const dataParam = [wallet.address, 2];
-      const methodData = testModule.contract.interface.functions[dataMethod].encode(dataParam);
+      const methodData = testModule.contract.methods[dataMethod](dataParam).encodeABI();
       const params = [
         wallet.address,
         testModule.address,

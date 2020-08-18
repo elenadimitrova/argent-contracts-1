@@ -631,7 +631,7 @@ contract("TransferManager", (accounts) => {
     });
 
     async function doCallContract({ value, state, relayed = false }) {
-      const dataToTransfer = contract.contract.interface.functions.setState.encode([state]);
+      const dataToTransfer = contract.contract.methods.setState([state]).encodeABI();
       const unspentBefore = await transferModule.getDailyUnspent(wallet.address);
       const params = [wallet.address, contract.address, value, dataToTransfer];
       let txReceipt;
@@ -651,19 +651,19 @@ contract("TransferManager", (accounts) => {
     }
 
     it("should not be able to call the wallet itselt", async () => {
-      const dataToTransfer = contract.contract.interface.functions.setState.encode([4]);
+      const dataToTransfer = contract.contract.methods.setState([4]).encodeABI();
       const params = [wallet.address, wallet.address, 10, dataToTransfer];
       await utils.assertRevert(transferModule.callContract(...params, { from: owner }), "BT: Forbidden contract");
     });
 
     it("should not be able to call a module of the wallet", async () => {
-      const dataToTransfer = contract.contract.interface.functions.setState.encode([4]);
+      const dataToTransfer = contract.contract.methods.setState([4]).encodeABI();
       const params = [wallet.address, transferModule.address, 10, dataToTransfer];
       await utils.assertRevert(transferModule.callContract(...params, { from: owner }), "BT: Forbidden contract");
     });
 
     it("should not be able to call a supported ERC20 token contract", async () => {
-      const dataToTransfer = contract.contract.interface.functions.setState.encode([4]);
+      const dataToTransfer = contract.contract.methods.setState([4]).encodeABI();
       const params = [wallet.address, erc20.address, 10, dataToTransfer];
       await utils.assertRevert(transferModule.callContract(...params, { from: owner }), "TM: Forbidden contract");
     });
@@ -671,7 +671,7 @@ contract("TransferManager", (accounts) => {
     it("should be able to call a supported token contract which is whitelisted", async () => {
       await transferModule.addToWhitelist(wallet.address, erc20.address, { from: owner });
       await increaseTime(3);
-      const dataToTransfer = erc20.contract.interface.functions.transfer.encode([infrastructure, 4]);
+      const dataToTransfer = erc20.contract.methods.transfer([infrastructure, 4]).encodeABI();
       const params = [wallet.address, erc20.address, 0, dataToTransfer];
       await transferModule.callContract(...params, { from: owner });
     });
@@ -708,7 +708,7 @@ contract("TransferManager", (accounts) => {
     }) {
       const fun = consumer === contract.address ? "setStateAndPayToken" : "setStateAndPayTokenWithConsumer";
       const token = wrapEth ? weth : erc20;
-      const dataToTransfer = contract.contract.interface.functions[fun].encode([state, token.address, amount]);
+      const dataToTransfer = contract.contract.methods.fun([state, token.address, amount]).encodeABI();
       const unspentBefore = await transferModule.getDailyUnspent(wallet.address);
       const params = [wallet.address]
         .concat(wrapEth ? [] : [erc20.address])
@@ -746,7 +746,7 @@ contract("TransferManager", (accounts) => {
 
     it("should restore existing approved amount after call", async () => {
       await transferModule.approveToken(wallet.address, erc20.address, contract.address, 10, { from: owner });
-      const dataToTransfer = contract.contract.interface.functions.setStateAndPayToken.encode([3, erc20.address, 5]);
+      const dataToTransfer = contract.contract.methods.setStateAndPayToken([3, erc20.address, 5]).encodeABI();
       await transferModule.approveTokenAndCallContract(
         wallet.address,
         erc20.address,
@@ -767,7 +767,7 @@ contract("TransferManager", (accounts) => {
 
     it("should be able to spend less than approved in call", async () => {
       await transferModule.approveToken(wallet.address, erc20.address, contract.address, 10, { from: owner });
-      const dataToTransfer = contract.contract.interface.functions.setStateAndPayToken.encode([3, erc20.address, 4]);
+      const dataToTransfer = contract.contract.methods.setStateAndPayToken([3, erc20.address, 4]).encodeABI();
       await transferModule.approveTokenAndCallContract(
         wallet.address,
         erc20.address,
@@ -787,7 +787,7 @@ contract("TransferManager", (accounts) => {
 
     it("should not be able to spend more than approved in call", async () => {
       await transferModule.approveToken(wallet.address, erc20.address, contract.address, 10, { from: owner });
-      const dataToTransfer = contract.contract.interface.functions.setStateAndPayToken.encode([3, erc20.address, 6]);
+      const dataToTransfer = contract.contract.methods.setStateAndPayToken([3, erc20.address, 6]).encodeABI();
       await utils.assertRevert(transferModule.approveTokenAndCallContract(
         wallet.address,
         erc20.address,
@@ -822,7 +822,7 @@ contract("TransferManager", (accounts) => {
       const consumer = await contract.tokenConsumer();
       await transferModule.addToWhitelist(wallet.address, contract.address, { from: owner });
       await increaseTime(3);
-      const dataToTransfer = contract.contract.interface.functions.setStateAndPayTokenWithConsumer.encode([6, erc20.address, amount]);
+      const dataToTransfer = contract.contract.methods.setStateAndPayTokenWithConsumer([6, erc20.address, amount]).encodeABI();
       await utils.assertRevert(
         transferModule.approveTokenAndCallContract(
           wallet.address, erc20.address, consumer, amount, contract.address, dataToTransfer, { from: owner }),
@@ -841,7 +841,7 @@ contract("TransferManager", (accounts) => {
     it("should fail to approve token if the amount to be approved is greater than the current balance", async () => {
       const startingBalance = await erc20.balanceOf(wallet.address);
       await erc20.burn(wallet.address, startingBalance);
-      const dataToTransfer = contract.contract.interface.functions.setStateAndPayToken.encode([3, erc20.address, 1]);
+      const dataToTransfer = contract.contract.methods.setStateAndPayToken([3, erc20.address, 1]).encodeABI();
       await utils.assertRevert(transferModule.approveTokenAndCallContract(
         wallet.address,
         erc20.address,

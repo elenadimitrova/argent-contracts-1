@@ -650,7 +650,7 @@ contract("MakerV2Loan", (accounts) => {
 
     it("should not allow reentrancy in acquireLoan", async () => {
       // Deploy a fake wallet capable of reentrancy
-      const acquireLoanCallData = makerV2.contract.interface.functions.acquireLoan.encode([AddressZero, bigNumToBytes32(ethers.BigNumber.from(0))]);
+      const acquireLoanCallData = makerV2.contract.methods.acquireLoan([AddressZero, bigNumToBytes32(ethers.BigNumber.from(0))]).encodeABI();
       const fakeWallet = await FakeWallet.new(true, makerV2.address, 0, acquireLoanCallData);
       await fakeWallet.init(owner, [makerV2.address]);
       // Create the vault with `owner` as owner
@@ -830,7 +830,7 @@ contract("MakerV2Loan", (accounts) => {
       // Add the bad module to the wallet
       await makerV2.addModule(walletAddress, badModule.address, { gasLimit: 2000000, from: owner });
       // Use the bad module to attempt a bad giveVault call
-      const callData = makerV2.contract.interface.functions.giveVault.encode([walletAddress, bigNumToBytes32(ethers.BigNumber.from(666))]);
+      const callData = makerV2.contract.methods.giveVault([walletAddress, bigNumToBytes32(ethers.BigNumber.from(666))]).encodeABI();
       await assertRevert(badModule.callContract(makerV2.address, 0, callData, { from: owner }), "MV2: unauthorized loanId");
     });
   });
