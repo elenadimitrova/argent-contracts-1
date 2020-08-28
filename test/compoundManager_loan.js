@@ -181,7 +181,7 @@ contract("Loan Module", (accounts) => {
         txReceipt = await manager.relay(loanManager, "openLoan", params, wallet, [owner]);
       } else {
         const tx = await loanManager.openLoan(...params, { from: owner });
-        txReceipt = await loanManager.verboseWaitForTransaction(tx);
+        txReceipt = tx.receipt;
       }
       await utils.hasEvent(txReceipt, "LoanOpened");
       const loanId = (await utils.parseLogs(txReceipt, loanManager, "LoanOpened"))[0]._loanId;
@@ -216,7 +216,7 @@ contract("Loan Module", (accounts) => {
         txReceipt = await manager.relay(loanManager, method, params, wallet, [owner]);
       } else {
         const tx = await loanManager[method](...params, { from: owner });
-        txReceipt = await loanManager.verboseWaitForTransaction(tx);
+        txReceipt = tx.receipt;
       }
       const collateralBalanceAfter = (collateral === ETH_TOKEN) ? await getBalance(wallet.address)
         : await collateral.balanceOf(wallet.address);
@@ -248,7 +248,7 @@ contract("Loan Module", (accounts) => {
         txReceipt = await manager.relay(loanManager, method, params, wallet, [owner]);
       } else {
         const tx = await loanManager[method](...params, { from: owner });
-        txReceipt = await loanManager.verboseWaitForTransaction(tx);
+        txReceipt = tx.receipt;
       }
       const debtBalanceAfter = (debtToken === ETH_TOKEN) ? await getBalance(wallet.address)
         : await debtToken.balanceOf(wallet.address);
@@ -589,7 +589,7 @@ contract("Loan Module", (accounts) => {
           txReceipt = await manager.relay(loanManager, method, params, wallet, [owner], accounts[9], false, 2000000);
         } else {
           const tx = await loanManager[method](...params, { from: owner });
-          txReceipt = await loanManager.verboseWaitForTransaction(tx);
+          txReceipt = tx.receipt;
         }
         await utils.hasEvent(txReceipt, "LoanClosed");
 

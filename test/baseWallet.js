@@ -190,7 +190,7 @@ contract("BaseWallet", (accounts) => {
       await oldWallet.init(owner, [module1.address]);
       await module1.callDapp(oldWallet.address);
       await module1.callDapp2(oldWallet.address, 2, false);
-      await assert.revert(module1.fail(oldWallet.address, "just because"));
+      await assertRevert(module1.fail(oldWallet.address, "just because"));
     });
   });
 
@@ -200,7 +200,7 @@ contract("BaseWallet", (accounts) => {
       await oldWallet.init(owner, [module1.address]);
       await module1.callDapp(oldWallet.address);
       await module1.callDapp2(oldWallet.address, 2, true);
-      await assert.revert(module1.fail(oldWallet.address, "just because"));
+      await assertRevert(module1.fail(oldWallet.address, "just because"));
     });
   });
 });

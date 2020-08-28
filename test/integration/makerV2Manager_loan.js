@@ -124,11 +124,11 @@ describe("Test MakerV2 Vaults", () => {
   beforeEach(async () => {
     lastLoanId = null;
     wallet = await Wallet.new();
-    await wallet.verboseWaitForTransaction(await wallet.init(owner, [
+    await wallet.init(owner, [
       config.modules.MakerManager, // MakerV1
       makerV2.address,
       transferManager.address,
-    ]));
+    ]);
     walletAddress = wallet.address;
     await (await walletAddress.send(parseEther("0.3"))).wait();
   });
@@ -190,7 +190,8 @@ describe("Test MakerV2 Vaults", () => {
         txR = await testManager.relay(makerV2, method, params, { contractAddress: walletAddress }, [owner]);
         assert.isTrue(txR.events.find((e) => e.event === "TransactionExecuted").args.success, "Relayed tx should succeed");
       } else {
-        txR = await makerV2.verboseWaitForTransaction(await makerV2[method](...params, { gasLimit: 2000000 }));
+        const tx = await makerV2[method](...params, { gasLimit: 2000000 });
+        txR = tx.receipt;
       }
       lastLoanId = txR.events.find((e) => e.event === "LoanOpened").args._loanId;
       assert.isDefined(lastLoanId, "Loan ID should be defined");
@@ -263,7 +264,7 @@ describe("Test MakerV2 Vaults", () => {
         const txR = await testManager.relay(makerV2Manager, method, params, { contractAddress: walletAddress }, [owner]);
         assert.isTrue(txR.events.find((e) => e.event === "TransactionExecuted").args.success, "Relayed tx should succeed");
       } else {
-        await makerV2Manager.verboseWaitForTransaction(await makerV2Manager[method](...params, { gasLimit: 2000000 }));
+        await makerV2Manager[method](...params, { gasLimit: 2000000 });
       }
 
       const afterCollateral = (collateral.address === ETH_TOKEN)
@@ -323,7 +324,7 @@ describe("Test MakerV2 Vaults", () => {
         const txR = await testManager.relay(makerV2, method, params, { contractAddress: walletAddress }, [owner]);
         assert.isTrue(txR.events.find((e) => e.event === "TransactionExecuted").args.success, "Relayed tx should succeed");
       } else {
-        await makerV2.verboseWaitForTransaction(await makerV2[method](...params, { gasLimit: 2000000 }));
+        await makerV2[method](...params, { gasLimit: 2000000 });
       }
       const afterDAI = await daiToken.balanceOf(wallet.address);
       const afterETH = await getBalance(wallet.address);
@@ -427,7 +428,7 @@ describe("Test MakerV2 Vaults", () => {
         const txR = await testManager.relay(makerV2, method, params, { contractAddress: walletAddress }, [owner]);
         assert.isTrue(txR.events.find((e) => e.event === "TransactionExecuted").args.success, "Relayed tx should succeed");
       } else {
-        await makerV2.verboseWaitForTransaction(await makerV2[method](...params, { gasLimit: 3000000 }));
+        await makerV2[method](...params, { gasLimit: 3000000 });
       }
       lastLoanId = null;
       const afterDAI = await daiToken.balanceOf(wallet.address);

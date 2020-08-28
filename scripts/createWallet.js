@@ -54,7 +54,7 @@ async function main() {
   ].map((name) => config.modules[name]).filter((x) => x);
   const tx = await ((walletFactoryWrapper.from && walletFactoryWrapper.from(manager))
     || walletFactoryWrapper).createWallet(owner, modules, walletEns);
-  const txReceipt = await walletFactoryWrapper.verboseWaitForTransaction(tx);
+  const txReceipt = tx.receipt;
   const walletAddress = txReceipt.events.find((log) => log.event === "WalletCreated").args._wallet;
   console.log(`New wallet ${walletEns}.${config.ENS.domain} successfully created at address ${walletAddress} for owner ${owner}.`);
 

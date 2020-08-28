@@ -16,7 +16,7 @@ const ERC20Approver = artifacts.require("ERC20Approver");
 const ZERO_BYTES32 = ethers.constants.HashZero;
 
 const RelayManager = require("../utils/relay-manager");
-const { parseRelayReceipt } = require("../utils/utilities.js");
+const { parseRelayReceipt, assertRevert } = require("../utils/utilities.js");
 
 contract("NftTransfer", (accounts) => {
   const manager = new RelayManager();
@@ -90,7 +90,7 @@ contract("NftTransfer", (accounts) => {
         if (shouldSucceed) {
           await txPromise;
         } else {
-          assert.revert(txPromise);
+          assertRevert(txPromise);
         }
       }
       if (shouldSucceed) {

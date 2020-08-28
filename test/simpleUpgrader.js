@@ -59,8 +59,8 @@ contract("SimpleUpgrader", (accounts) => {
       // Here we adjust how we call isRegisteredModule which has 2 overlaods, one accepting a single address
       // and a second accepting an array of addresses. Behaviour as to which overload is selected to run
       // differs between CI and Coverage environments, adjusted for this here
-      const isRegistered = await registry["isRegisteredModule(address)"](initialModule.address);
-
+      // todo: confirm the above still stands?
+      const isRegistered = await registry.isRegisteredModule(initialModule.address);
       assert.equal(isRegistered, true, "module1 should be registered");
       const info = await registry.moduleInfo(initialModule.address);
       assert.equal(parseBytes32String(info), name, "module1 should be registered with the correct name");
@@ -95,7 +95,7 @@ contract("SimpleUpgrader", (accounts) => {
       let isAuthorised = await wallet.authorised(initialModule.address);
       assert.equal(isAuthorised, true, "initial module should be authorised");
       // try (and fail) to add moduleToAdd to wallet
-      await assert.revert(initialModule.addModule(wallet.address, moduleToAdd.address, { from: owner }));
+      await utils.assertRevert(initialModule.addModule(wallet.address, moduleToAdd.address, { from: owner }));
       isAuthorised = await wallet.authorised(moduleToAdd.address);
       assert.equal(isAuthorised, false, "unregistered module should not be authorised");
     });
@@ -178,7 +178,7 @@ contract("SimpleUpgrader", (accounts) => {
           const { success } = (await utils.parseLogs(txReceipt, relayerModule, "TransactionExecuted"))[0];
           assert.isTrue(!success, "Relayed upgrade to 0 module should have failed.");
         } else {
-          assert.revert(moduleV1.addModule(...params2, { from: owner }));
+          utils.assertRevert(moduleV1.addModule(...params2, { from: owner }));
         }
         return;
       }
@@ -189,7 +189,7 @@ contract("SimpleUpgrader", (accounts) => {
         assert.equal(success, useOnlyOwnerModule, "Relayed tx should only have succeeded if an OnlyOwnerModule was used");
       } else {
         const tx = await moduleV1.addModule(...params1, { from: owner });
-        txReceipt = await moduleV1.verboseWaitForTransaction(tx);
+        txReceipt = tx.receipt;
       }
 
       // test event ordering
@@ -301,7 +301,7 @@ contract("SimpleUpgrader", (accounts) => {
       await registry.registerModule(upgrader.address, formatBytes32String("V1toV2"));
 
       // Put the wallet under recovery
-      await manager.relay(recoveryManager, "executeRecovery", [wallet.address, newowner.address], wallet, [guardian]);
+      await manager.relay(recoveryManager, "executeRecovery", [wallet.address, newowner], wallet, [guardian]);
       // check that the wallet is locked
       let locked = await lockManager.isLocked(wallet.address);
       assert.isTrue(locked, "wallet should be locked");
