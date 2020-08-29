@@ -175,7 +175,7 @@ contract("SimpleUpgrader", (accounts) => {
       if (toAdd.length === 0) {
         if (relayed) {
           txReceipt = await manager.relay(moduleV1, "addModule", params2, wallet, [owner]);
-          const { success } = (await utils.parseLogs(txReceipt, relayerModule, "TransactionExecuted"))[0];
+          const { success } = (await utils.parseLogs(txReceipt, "TransactionExecuted"));
           assert.isTrue(!success, "Relayed upgrade to 0 module should have failed.");
         } else {
           utils.assertRevert(moduleV1.addModule(...params2, { from: owner }));
@@ -185,7 +185,7 @@ contract("SimpleUpgrader", (accounts) => {
 
       if (relayed) {
         txReceipt = await manager.relay(moduleV1, "addModule", params1, wallet, [owner]);
-        const { success } = (await utils.parseLogs(txReceipt, relayerModule, "TransactionExecuted"))[0];
+        const { success } = (await utils.parseLogs(txReceipt, "TransactionExecuted"));
         assert.equal(success, useOnlyOwnerModule, "Relayed tx should only have succeeded if an OnlyOwnerModule was used");
       } else {
         const tx = await moduleV1.addModule(...params1, { from: owner });
@@ -193,7 +193,7 @@ contract("SimpleUpgrader", (accounts) => {
       }
 
       // test event ordering
-      const logs = utils.parseLogs(txReceipt, wallet, "AuthorisedModule");
+      const logs = utils.parseLogs(txReceipt, "AuthorisedModule");
       const upgraderAuthorisedLogIndex = logs.findIndex((e) => e.module === upgrader1.address && e.value === true);
       const upgraderUnauthorisedLogIndex = logs.findIndex((e) => e.module === upgrader1.address && e.value === false);
       if (!relayed || useOnlyOwnerModule) {

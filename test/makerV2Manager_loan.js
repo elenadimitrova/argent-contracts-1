@@ -162,12 +162,12 @@ contract("MakerV2Loan", (accounts) => {
     let txReceipt;
     if (relayed) {
       txReceipt = await manager.relay(makerV2, method, params, wallet, [owner]);
-      const { success } = (await parseLogs(txReceipt, relayerModule, "TransactionExecuted"))[0];
+      const { success } = await parseLogs(txReceipt, "TransactionExecuted");
       assert.isTrue(success, "Relayed tx should succeed");
     } else {
       txReceipt = await (await makerV2[method](...params, { gasLimit: 2000000, from: owner })).wait();
     }
-    const loanId = (await parseLogs(txReceipt, makerV2, "LoanOpened"))[0]._loanId;
+    const loanId = (await parseLogs(txReceipt, "LoanOpened"))._loanId;
     assert.isDefined(loanId, "Loan ID should be defined");
 
     const afterCollateral = (collateral.address === ETH_TOKEN)
@@ -674,7 +674,7 @@ contract("MakerV2Loan", (accounts) => {
       const { daiAmount, collateralAmount } = await getTestAmounts(ETH_TOKEN);
       const params = [walletAddress, ETH_TOKEN, collateralAmount, sai.address, daiAmount];
       const txReceipt = await (await makerV1.openLoan(...params, { gasLimit: 2000000, from: owner })).wait();
-      oldCdpId = (await parseLogs(txReceipt, makerV1, "LoanOpened"))[0]._loanId;
+      oldCdpId = (await parseLogs(txReceipt, "LoanOpened"))._loanId;
       assert.isDefined(oldCdpId, "The old CDP ID should be defined");
     });
 
@@ -684,12 +684,12 @@ contract("MakerV2Loan", (accounts) => {
       let txReceipt;
       if (relayed) {
         txReceipt = await manager.relay(makerV2, method, params, wallet, [owner]);
-        const { success } = (await parseLogs(txReceipt, relayerModule, "TransactionExecuted"))[0];
+        const { success } = (await parseLogs(txReceipt, "TransactionExecuted"));
         assert.isTrue(success, "Relayed tx should succeed");
       } else {
         txReceipt = await (await makerV2[method](...params, { gasLimit: 2000000, from: owner })).wait();
       }
-      const loanId = (await parseLogs(txReceipt, makerV2, "CdpMigrated"))[0]._newVaultId;
+      const loanId = (await parseLogs(txReceipt, "CdpMigrated"))._newVaultId;
       assert.isDefined(loanId, "The new vault ID should be defined");
 
       // Add some collateral and debt

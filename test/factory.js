@@ -168,8 +168,8 @@ contract("WalletFactory", (accounts) => {
       const label = `wallet${index}`;
       const modules = [module1.address];
       const tx = await factory.createWallet(owner, modules, label, guardian);
-      const txReceipt = tx.receipt;
-      const walletAddr = txReceipt.events.filter((event) => event.event === "WalletCreated")[0].args.wallet;
+      const eventArgs = utils.parseLogs(tx.receipt, "WalletCreated");
+      const walletAddr = eventArgs.wallet;
       // we test that the wallet has the correct owner
       const wallet = await BaseWallet.at(walletAddr);
       const walletOwner = await wallet.owner();
@@ -181,8 +181,8 @@ contract("WalletFactory", (accounts) => {
       const modules = [module1.address, module2.address];
       // we create the wallet
       const tx = await factory.createWallet(owner, modules, label, guardian);
-      const txReceipt = tx.receipt;
-      const walletAddr = txReceipt.events.filter((event) => event.event === "WalletCreated")[0].args.wallet;
+      const eventArgs = utils.parseLogs(tx.receipt, "WalletCreated");
+      const walletAddr = eventArgs.wallet;
       // we test that the wallet has the correct modules
       const wallet = await BaseWallet.at(walletAddr);
       let isAuthorised = await wallet.authorised(module1.address);
@@ -196,8 +196,8 @@ contract("WalletFactory", (accounts) => {
       const label = `wallet${index}`;
       const modules = [module1.address];
       const tx = await factory.createWallet(owner, modules, label, guardian);
-      const txReceipt = tx.receipt;
-      const walletAddr = txReceipt.events.filter((event) => event.event === "WalletCreated")[0].args.wallet;
+      const eventArgs = utils.parseLogs(tx.receipt, "WalletCreated");
+      const walletAddr = eventArgs.wallet;
       // we test that the wallet has the correct guardian
       const success = await guardianStorage.isGuardian(walletAddr, guardian);
       assert.equal(success, true, "should have the correct guardian");
@@ -209,8 +209,8 @@ contract("WalletFactory", (accounts) => {
       const modules = [module1.address, module2.address];
       // we create the wallet
       const tx = await factory.createWallet(owner, modules, label, guardian);
-      const txReceipt = tx.receipt;
-      const walletAddr = txReceipt.events.filter((event) => event.event === "WalletCreated")[0].args.wallet;
+      const eventArgs = utils.parseLogs(tx.receipt, "WalletCreated");
+      const walletAddr = eventArgs.wallet;
       // we test that the wallet has the correct ENS
       const nodeOwner = await ensRegistry.owner(labelNode);
       assert.equal(nodeOwner, walletAddr);
@@ -222,8 +222,8 @@ contract("WalletFactory", (accounts) => {
       const modules = [module1.address, module2.address];
       // we create the wallet
       const tx = await factory.createWallet(owner, modules, NO_ENS, guardian);
-      const txReceipt = tx.receipt;
-      const walletAddr = txReceipt.events.filter((event) => event.event === "WalletCreated")[0].args.wallet;
+      const eventArgs = utils.parseLogs(tx.receipt, "WalletCreated");
+      const walletAddr = eventArgs.wallet;
       assert.notEqual(walletAddr, ZERO_ADDRESS, "wallet should be created");
     });
 
@@ -289,8 +289,8 @@ contract("WalletFactory", (accounts) => {
       const futureAddr = await factory.getAddressForCounterfactualWallet(owner, modules, guardian, salt);
       // we create the wallet
       const tx = await factory.createCounterfactualWallet(owner, modules, label, guardian, salt);
-      const txReceipt = tx.receipt;
-      const walletAddr = txReceipt.events.filter((event) => event.event === "WalletCreated")[0].args.wallet;
+      const eventArgs = utils.parseLogs(tx.receipt, "WalletCreated");
+      const walletAddr = eventArgs.wallet;
       // we test that the wallet is at the correct address
       assert.equal(futureAddr, walletAddr, "should have the correct address");
     });
@@ -303,8 +303,8 @@ contract("WalletFactory", (accounts) => {
       const futureAddr = await factory.getAddressForCounterfactualWallet(owner, modules, guardian, salt);
       // we create the wallet
       const tx = await factory.createCounterfactualWallet(owner, modules, label, guardian, salt);
-      const txReceipt = tx.receipt;
-      const walletAddr = txReceipt.events.filter((event) => event.event === "WalletCreated")[0].args.wallet;
+      const eventArgs = utils.parseLogs(tx.receipt, "WalletCreated");
+      const walletAddr = eventArgs.wallet;
       // we test that the wallet is at the correct address
       assert.equal(futureAddr, walletAddr, "should have the correct address");
       // we test that the wallet has the correct owner
@@ -321,8 +321,8 @@ contract("WalletFactory", (accounts) => {
       const futureAddr = await factory.getAddressForCounterfactualWallet(owner, modules, guardian, salt);
       // we create the wallet
       const tx = await factory.createCounterfactualWallet(owner, modules, label, guardian, salt);
-      const txReceipt = tx.receipt;
-      const walletAddr = txReceipt.events.filter((event) => event.event === "WalletCreated")[0].args.wallet;
+      const eventArgs = utils.parseLogs(tx.receipt, "WalletCreated");
+      const walletAddr = eventArgs.wallet;
       // we test that the wallet is at the correct address
       assert.equal(futureAddr, walletAddr, "should have the correct address");
       // we test that the wallet has the correct modules
@@ -342,8 +342,8 @@ contract("WalletFactory", (accounts) => {
       const futureAddr = await factory.getAddressForCounterfactualWallet(owner, modules, guardian, salt);
       // we create the wallet
       const tx = await factory.createCounterfactualWallet(owner, modules, label, guardian, salt);
-      const txReceipt = tx.receipt;
-      const walletAddr = txReceipt.events.filter((event) => event.event === "WalletCreated")[0].args.wallet;
+      const eventArgs = utils.parseLogs(tx.receipt, "WalletCreated");
+      const walletAddr = eventArgs.wallet;
       // we test that the wallet is at the correct address
       assert.equal(futureAddr, walletAddr, "should have the correct address");
       // we test that the wallet has the correct ENS
@@ -360,8 +360,8 @@ contract("WalletFactory", (accounts) => {
       const futureAddr = await factory.getAddressForCounterfactualWallet(owner, modules, guardian, salt);
       // we create the wallet
       const tx = await factory.createCounterfactualWallet(owner, modules, NO_ENS, guardian, salt);
-      const txReceipt = tx.receipt;
-      const walletAddr = txReceipt.events.filter((event) => event.event === "WalletCreated")[0].args.wallet;
+      const eventArgs = utils.parseLogs(tx.receipt, "WalletCreated");
+      const walletAddr = eventArgs.wallet;
       // we test that the wallet is at the correct address
       assert.equal(futureAddr, walletAddr, "should have the correct address");
     });
@@ -374,8 +374,8 @@ contract("WalletFactory", (accounts) => {
       const futureAddr = await factory.getAddressForCounterfactualWallet(owner, modules, guardian, salt);
       // we create the wallet
       const tx = await factory.createCounterfactualWallet(owner, modules, label, guardian, salt);
-      const txReceipt = tx.receipt;
-      const walletAddr = txReceipt.events.filter((event) => event.event === "WalletCreated")[0].args.wallet;
+      const eventArgs = utils.parseLogs(tx.receipt, "WalletCreated");
+      const walletAddr = eventArgs.wallet;
       // we test that the wallet is at the correct address
       assert.equal(futureAddr, walletAddr, "should have the correct address");
       // we test that the wallet has the correct guardian
@@ -391,13 +391,11 @@ contract("WalletFactory", (accounts) => {
       const futureAddr = await factory.getAddressForCounterfactualWallet(owner, modules, guardian, salt);
       // we create the first wallet
       const tx = await factory.createCounterfactualWallet(owner, modules, label, guardian, salt);
-      const txReceipt = tx.receipt;
-      const walletAddr = txReceipt.events.filter((event) => event.event === "WalletCreated")[0].args.wallet;
+      const eventArgs = utils.parseLogs(tx.receipt, "WalletCreated");
       // we test that the wallet is at the correct address
-      assert.equal(futureAddr, walletAddr, "should have the correct address");
+      assert.equal(futureAddr, eventArgs.wallet, "should have the correct address");
       // we create the second wallet
-      await utils.assertRevert(factory.createCounterfactualWallet(owner, modules, label, guardian, salt),
-        "should fail when address is in use");
+      await utils.assertRevert(factory.createCounterfactualWallet(owner, modules, label, guardian, salt));
     });
 
     it("should fail to create counterfactually when there are no modules (with guardian)", async () => {
@@ -424,16 +422,15 @@ contract("WalletFactory", (accounts) => {
       // we get the future address
       const futureAddr = await factory.getAddressForCounterfactualWallet(owner, modules, guardian, salt);
       // We send ETH to the address
-      await web3.eth.sendTransaction({ from: accounts[0], to: futureAddr, value: amount });
+      await web3.eth.sendTransaction({ from: infrastructure, to: futureAddr, value: amount });
       // we create the wallet
       const tx = await factory.createCounterfactualWallet(owner, modules, label, guardian, salt);
       const txReceipt = tx.receipt;
 
-      const wallet = await BaseWallet.at(futureAddr);
       await utils.hasEvent(txReceipt, "Received");
-      const log = await utils.parseLogs(txReceipt, wallet, "Received");
-      assert.equal(log[0].value.toNumber(), amount, "should log the correct amount");
-      assert.equal(log[0].sender, "0x0000000000000000000000000000000000000000", "sender should be address(0)");
+      const eventArgs = utils.parseLogs(tx.receipt, "Received");
+      assert.equal(eventArgs.value.toNumber(), amount, "should log the correct amount");
+      assert.equal(eventArgs.sender, "0x0000000000000000000000000000000000000000", "sender should be address(0)");
     });
 
     it("should fail to get an address when the guardian is empty", async () => {
