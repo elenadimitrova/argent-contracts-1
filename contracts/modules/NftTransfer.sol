@@ -57,7 +57,7 @@ contract NftTransfer is OnlyOwnerModule {
      * static call redirection from the wallet to the module.
      * @param _wallet The target wallet.
      */
-    function init(address _wallet) public override onlyWallet(_wallet) {
+    function init(address _wallet) external override onlyWallet(_wallet) {
         IWallet(_wallet).enableStaticCall(address(this), ERC721_RECEIVED);
     }
 

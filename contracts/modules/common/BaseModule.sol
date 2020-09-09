@@ -103,7 +103,7 @@ contract BaseModule is IModule {
      * The method can only be called by the wallet itself.
      * @param _wallet The wallet.
      */
-    function init(address _wallet) public virtual override onlyWallet(_wallet) {
+    function init(address _wallet) external virtual override onlyWallet(_wallet) {
         emit ModuleInitialised(_wallet);
     }
 

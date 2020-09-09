@@ -108,7 +108,7 @@ contract TransferManager is OnlyOwnerModule, BaseTransfer {
      * of the daily limit from the previous implementation of the LimitManager module.
      * @param _wallet The target wallet.
      */
-    function init(address _wallet) public override(BaseModule) onlyWallet(_wallet) {
+    function init(address _wallet) external override(BaseModule) onlyWallet(_wallet) {
 
         // setup static calls
         IWallet(_wallet).enableStaticCall(address(this), ERC1271_ISVALIDSIGNATURE_BYTES);
