@@ -1,54 +1,19 @@
-# Argent Wallet Smart Contracts
+# Argent wallet integration with Chainlink price feeds
 
-The Argent wallet is an Ethereum Smart Contract based mobile wallet. The wallet's user keeps an Ethereum account (Externally Owned Account) secretly on his mobile device. This account is set as the owner of the Smart Contract. User's funds (ETH and ERC20 tokens) are stored on the Smart Contract. With that model, logic can be added to the wallet to improve both the user experience and the wallet security. For instance, the wallet is guarded, recoverable, lockable, protected by a daily limit and upgradable.
-
-See full specifications [here](specifications/specifications.pdf)
-
-## Install
-
-Ensure the correct node version is installed:
+Compile all contracts:
 ```
-nvm install `cat .nvmrc`
+npm run cc
 ```
 
-Install requirements with npm:
+Launch ganache fork of ropsten:
 ```
-npm install
-```
-
-## Compile
-Compile the external contracts:
-```
-npm run compile:lib
+npm run ropsten-fork
 ```
 
-Compile the contracts:
+Run integration tests:
 ```
-npm run compile
+npm run test:integration
 ```
-
-Compile the test contracts:
-```
-npm run compile:test
-```
-
-## Test
-
-Launch ganache:
-```
-npm run ganache
-```
-
-Run the tests:
-```
-npm run test
-```
-
-To run coverage testing:
-```
-npm run test:coverage
-```
-You need to not have `ganache` running with this as it uses own instance. 
 
 ## License
 
