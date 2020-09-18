@@ -16,6 +16,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.6.12;
 
+import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 import "./ITokenPriceRegistry.sol";
 import "./base/Managed.sol";
 
@@ -27,6 +28,9 @@ import "./base/Managed.sol";
  * Only managers of this contract can modify its state.
  */
 contract TokenPriceRegistry is ITokenPriceRegistry, Managed {
+    // Maps tokens to decentralized price aggregators
+    mapping(address => AggregatorV3Interface) public aggregators;
+
     struct TokenInfo {
         uint184 cachedPrice;
         uint64 updatedAt;
@@ -42,8 +46,22 @@ contract TokenPriceRegistry is ITokenPriceRegistry, Managed {
     // Getters
 
     function getTokenPrice(address _token) external override view returns (uint184 _price) {
-        _price = tokenInfo[_token].cachedPrice;
+        AggregatorV3Interface aggregator = aggregators[_token];
+        if (address(aggregator) != address(0)) {
+            (uint80 roundID,
+            int256 price,
+            uint256 startedAt,
+            uint256 timeStamp,
+            uint80 answeredInRound) = aggregator.latestRoundData();
+        // If the round is not complete yet, timestamp is 0
+        // require(timeStamp > 0, "Round not complete");
+        // todo work out why price is an int rather than uint
+        return uint184(price);
+        } else {
+            return tokenInfo[_token].cachedPrice;
+        }
     }
+
     function isTokenTradable(address _token) external override view returns (bool _isTradable) {
         _isTradable = tokenInfo[_token].isTradable;
     }
@@ -80,5 +98,22 @@ contract TokenPriceRegistry is ITokenPriceRegistry, Managed {
             require(msg.sender == owner || (!_tradable[i] && managers[msg.sender]), "TPS: Unauthorised");
             tokenInfo[_tokens[i]].isTradable = _tradable[i];
         }
+    }
+
+
+    function addAggregator(address _token, address _aggregator) external onlyManager {
+        AggregatorV3Interface aggregator = AggregatorV3Interface(_aggregator);
+        // Check the aggregator is valid
+        require(aggregator.version() > 0, "TPS: invalid aggregator");
+        aggregators[_token] = aggregator;
+        //emit AggregatorAdded(_token, _aggregator);
+    }
+
+    function removeAggregator(address _token) external onlyManager {
+        address aggregator = address(aggregators[_token]);
+        require(aggregator != address(0), "TPS: aggregator does not exist");
+        delete aggregators[_token];
+
+        //emit AggregatorRemoved(_token, aggregator);
     }
 }

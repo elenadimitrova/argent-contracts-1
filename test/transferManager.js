@@ -23,6 +23,7 @@ const LegacyTokenPriceProvider = require("../build-legacy/v1.6.0/TokenPriceProvi
 const ERC20 = require("../build/TestERC20");
 const WETH = require("../build/WETH9");
 const TestContract = require("../build/TestContract");
+const ChainlinkPriceProviderBAT = require("../build/ChainlinkPriceProviderBAT");
 
 const { ETH_TOKEN, hasEvent } = require("../utils/utilities.js");
 
@@ -264,6 +265,14 @@ describe("TransferManager", function () {
       await tokenPriceRegistry.from(infrastructure).setPriceForTokenList([erc20First.contractAddress], [23000]);
       const etherValue = await getEtherValue(100, erc20First.contractAddress);
       assert.equal(etherValue.toString(), 0); // 2,300,000
+    });
+
+    it("should be able to get price from chainlink oracle if available", async () => {
+      const priceProviderBAT = await deployer.deploy(ChainlinkPriceProviderBAT);
+      await tokenPriceRegistry.from(infrastructure).addAggregator(erc20First.contractAddress, priceProviderBAT.contractAddress);
+
+      const tokenPriceSet = await tokenPriceRegistry.getTokenPrice(erc20First.contractAddress);
+      assert.equal(tokenPriceSet, 654600000000000);
     });
   });
 
