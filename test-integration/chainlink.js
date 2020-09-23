@@ -3,7 +3,7 @@
 const TokenPriceRegistry = require("../build/TokenPriceRegistry");
 const TestManager = require("../utils/test-manager");
 
-describe("Chainlink integration ", function () {
+describe("Chainlink integration", function () {
   this.timeout(100000);
 
   const manager = new TestManager();
@@ -124,8 +124,8 @@ describe("Chainlink integration ", function () {
     );
   });
 
-  describe("Chainlink price feeds integration", () => {
-    it("should be able to get price from chainlink oracle if available", async () => {
+  describe("ERC20 token price feeds", () => {
+    it("should be able to get available prices", async () => {
       const tokenPriceBAT = await tokenPriceRegistry.getTokenPrice("0x0d8775f648430679a709e98d2b0cb6250d2887ef");
       assert.notEqual(tokenPriceBAT.toString(), 0);
       console.log("BAT/ETH", tokenPriceBAT.toString());

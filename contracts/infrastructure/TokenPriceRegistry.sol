@@ -42,6 +42,8 @@ contract TokenPriceRegistry is ITokenPriceRegistry, Managed {
     // The minimum period between two price updates
     uint256 public minPriceUpdatePeriod;
 
+    event AggregatorAdded(address token, address aggregator);
+    event AggregatorRemoved(address token, address aggregator);
 
     // Getters
 
@@ -53,10 +55,12 @@ contract TokenPriceRegistry is ITokenPriceRegistry, Managed {
             uint256 startedAt,
             uint256 timeStamp,
             uint80 answeredInRound) = aggregator.latestRoundData();
-        // If the round is not complete yet, timestamp is 0
-        // require(timeStamp > 0, "Round not complete");
-        // todo work out why price is an int rather than uint
-        return uint184(price);
+            // If the round is not complete yet, timestamp is 0
+            require(timeStamp > 0, "TP: round not complete");
+            // Ensure price is a positive number within range and convert
+            require(price > 0, "TP: price is zero or negative");
+            require(price < 2**184, "TP: more than 184 bits");
+            return uint184(price);
         } else {
             return tokenInfo[_token].cachedPrice;
         }
@@ -106,7 +110,8 @@ contract TokenPriceRegistry is ITokenPriceRegistry, Managed {
         // Check the aggregator is valid
         require(aggregator.version() > 0, "TPS: invalid aggregator");
         aggregators[_token] = aggregator;
-        //emit AggregatorAdded(_token, _aggregator);
+
+        emit AggregatorAdded(_token, _aggregator);
     }
 
     function removeAggregator(address _token) external onlyManager {
@@ -114,6 +119,6 @@ contract TokenPriceRegistry is ITokenPriceRegistry, Managed {
         require(aggregator != address(0), "TPS: aggregator does not exist");
         delete aggregators[_token];
 
-        //emit AggregatorRemoved(_token, aggregator);
+        emit AggregatorRemoved(_token, aggregator);
     }
 }
